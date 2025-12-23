@@ -1,120 +1,57 @@
-import productsData from "@/data/products.json";
+// lib/products.ts
+import productsData from "../data/products.json";
 
-export type ProductImage = { src: string; alt?: string };
+export type AnyProduct = Record<string, any>;
 
-export type Product = {
-  slug: string;
-  title?: string;
-  name?: string;
-  brand?: string;
-  price: number;
-  compareAtPrice?: number | null;
-  images?: Array<ProductImage> | string[];
-  category?: string;
-  kat?: string;
-  tags?: string[];
-  id?: string | number;
-  handle?: string;
-  productSlug?: string;
-};
+export function getAllProducts(): AnyProduct[] {
+  // products.json: Array mi, {products:[...]} mi, {items:[...]} mi?
+  if (Array.isArray(productsData)) return productsData as AnyProduct[];
 
-function normalizeText(s: any) {
-  return (s ?? "").toString().toLowerCase().trim();
+  const any = productsData as any;
+
+  if (any && Array.isArray(any.products)) return any.products as AnyProduct[];
+  if (any && Array.isArray(any.items)) return any.items as AnyProduct[];
+  if (any && Array.isArray(any.data)) return any.data as AnyProduct[];
+
+  return [];
 }
 
-/** URL/slug için TR -> ASCII normalize */
-function normalizeSlug(input: any) {
-  return normalizeText(decodeURIComponent((input ?? "").toString()))
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c");
+export function safeDecode(v: string) {
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
 }
 
-function slugify(input: string) {
-  const s = normalizeSlug(input)
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return s || "urun";
+export function normalizeSlug(v: any) {
+  return safeDecode(String(v ?? ""))
+    .trim()
+    .toLowerCase()
+    .replace(/^\/+|\/+$/g, "");
 }
 
-function getTitle(p: Product) {
-  return p.title ?? p.name ?? "Ürün";
-}
+export function getProductSlug(p: AnyProduct) {
+  const direct =
+    p?.slug ??
+    p?.handle ??
+    p?.urlSlug ??
+    p?.productSlug ??
+    p?.seo?.slug ??
+    p?.seoSlug;
 
-function normalizeImages(p: Product): ProductImage[] {
-  const imgs: any = p.images ?? [];
-  if (!Array.isArray(imgs) || imgs.length === 0) {
-    return [{ src: "/demo/urun-1.jpg", alt: getTitle(p) }];
+  if (direct) return normalizeSlug(direct);
+
+  const maybeUrl = p?.url || p?.permalink || p?.href || p?.link || "";
+  if (typeof maybeUrl === "string" && maybeUrl) {
+    const clean = maybeUrl.split("?")[0].split("#")[0];
+    const parts = clean.split("/").filter(Boolean);
+    if (parts.length) return normalizeSlug(parts[parts.length - 1]);
   }
 
-  return imgs
-    .map((it: any) => {
-      if (!it) return null;
-      if (typeof it === "string") return { src: it, alt: getTitle(p) };
-      return { src: it.src ?? "/demo/urun-1.jpg", alt: it.alt ?? getTitle(p) };
-    })
-    .filter(Boolean) as ProductImage[];
+  return normalizeSlug(p?.id ?? p?.sku ?? "");
 }
 
-function enrichProducts(raw: any[]): Product[] {
-  return (raw ?? []).map((p) => {
-    const title = (p.title ?? p.name ?? "").toString();
-
-    const slugRaw =
-      (p.slug ?? p.productSlug ?? p.handle ?? p.id ?? "").toString().trim() ||
-      title;
-
-    // ✅ En kritik nokta: slug her zaman standart (ASCII) olsun
-    const slug = slugify(slugRaw);
-
-    return {
-      slug,
-      title: p.title ?? p.name,
-      name: p.name,
-      brand: p.brand,
-      price: Number(p.price ?? 0),
-      compareAtPrice: p.compareAtPrice ?? p.compare_at_price ?? null,
-      images: p.images,
-      category: p.category,
-      kat: p.kat,
-      tags: Array.isArray(p.tags) ? p.tags : [],
-      id: p.id,
-      handle: p.handle,
-      productSlug: p.productSlug,
-    };
-  });
-}
-
-let _cache: Product[] | null = null;
-
-export function getAllProducts(): Product[] {
-  if (_cache) return _cache;
-  _cache = enrichProducts(productsData as any[]);
-  return _cache;
-}
-
-export function getProduct(
-  slug: string
-): (Product & { images: ProductImage[]; title: string }) | null {
-  const s = slugify(slug); // ✅ gelen slug’ı da standartlaştır
-
-  const all = getAllProducts();
-
-  const found =
-    all.find((p) => p.slug === s) ||
-    // ekstra güvenlik: title’dan üretilen slug ile de dene
-    all.find((p) => slugify(getTitle(p)) === s);
-
-  if (!found) return null;
-
-  return {
-    ...found,
-    title: getTitle(found),
-    images: normalizeImages(found),
-  };
+export function getProductName(p: AnyProduct) {
+  return p?.name || p?.title || "Ürün";
 }
