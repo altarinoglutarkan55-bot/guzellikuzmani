@@ -44,3 +44,5 @@ next-env.d.ts
 .env*.local
 # local backups
 app__backup_*
+# backups (do not ship)
+app__backup_*/
