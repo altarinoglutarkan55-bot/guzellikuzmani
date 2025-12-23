@@ -37,7 +37,13 @@ export default async function ProductPage({
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Gallery */}
           <section className="rounded-3xl border border-zinc-200 bg-white p-4">
-            <Gallery images={product.images} />
+            <Gallery
+  images={product.images.map((img) => ({
+    src: img.src,
+    alt: img.alt ?? product.title,
+  }))}
+/>
+
           </section>
 
           {/* Info */}
