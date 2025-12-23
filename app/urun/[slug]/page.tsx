@@ -1,22 +1,31 @@
 import { notFound } from "next/navigation";
-import products from "@/data/products.json";
-import Gallery from "./_components/Gallery";
+import Image from "next/image";
+import Link from "next/link";
+import productsData from "@/data/products.json";
+
+type ProductImage = {
+  src: string;
+  alt?: string;
+};
 
 type Product = {
   slug: string;
-  title: string;
+  title?: string;
+  name?: string;
   brand?: string;
   price: number;
-  compareAtPrice?: number;
+  compareAtPrice?: number | null;
+  images?: ProductImage[] | string[];
   shortDescription?: string;
+  description?: string;
   benefits?: string[];
   usage?: string;
   ingredientsNote?: string;
-  images: { src: string; alt?: string }[];
+  tags?: string[];
 };
 
-function normalizeSlug(s: string) {
-  return s
+function normalizeSlug(slug: string) {
+  return slug
     .toLowerCase()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
@@ -26,84 +35,120 @@ function normalizeSlug(s: string) {
     .replace(/ç/g, "c");
 }
 
-export default function ProductPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const slug = normalizeSlug(params.slug);
-
-  const product = (products as Product[]).find(
-    (p) => normalizeSlug(p.slug) === slug
-  );
-
-  if (!product) {
-    notFound();
+function getImages(p: Product): { src: string; alt: string }[] {
+  if (!p.images || p.images.length === 0) {
+    return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
   }
 
-  const images = product.images.map((img) => ({
-    src: img.src,
-    alt: img.alt ?? product.title,
-  }));
+  return (p.images as any[]).map((img, i) => {
+    if (typeof img === "string") {
+      return { src: img, alt: p.title ?? "Ürün" };
+    }
+    return {
+      src: img.src,
+      alt: img.alt ?? p.title ?? `Ürün görseli ${i + 1}`,
+    };
+  });
+}
+
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const normalized = normalizeSlug(slug);
+
+  const product = (productsData as Product[]).find(
+    (p) => normalizeSlug(p.slug) === normalized
+  );
+
+  if (!product) notFound();
+
+  const images = getImages(product);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <div className="grid gap-8 md:grid-cols-2">
-        {/* GALERİ */}
-        <Gallery images={images} />
+        {/* SOL: GALERİ */}
+        <div className="relative">
+          <div className="relative aspect-square w-full max-w-md mx-auto rounded-3xl bg-zinc-50 ring-1 ring-zinc-200">
+            <Image
+              src={images[0].src}
+              alt={images[0].alt}
+              fill
+              className="object-contain p-6"
+              priority
+            />
+          </div>
 
-        {/* BİLGİ */}
-        <div>
-          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <div className="mt-4 grid grid-cols-4 gap-2 max-w-md mx-auto">
+            {images.slice(1).map((img, i) => (
+              <div
+                key={i}
+                className="relative aspect-square rounded-xl bg-zinc-50 ring-1 ring-zinc-200"
+              >
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-contain p-2"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
 
-          {product.brand && (
-            <p className="mt-1 text-sm text-neutral-500">
+        {/* SAĞ: BİLGİ */}
+        <div className="space-y-5">
+          <div>
+            <p className="text-sm font-semibold text-zinc-500">
               {product.brand}
             </p>
-          )}
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+              {product.title ?? product.name}
+            </h1>
+          </div>
 
-          <div className="mt-4 flex items-center gap-3">
-            <p className="text-2xl font-semibold text-black">
-              {product.price} ₺
-            </p>
-
-            {product.compareAtPrice ? (
-              <p className="text-sm line-through text-neutral-400">
-                {product.compareAtPrice} ₺
-              </p>
-            ) : null}
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold text-zinc-900">
+              ₺{product.price}
+            </span>
+            {product.compareAtPrice && (
+              <span className="text-sm text-zinc-400 line-through">
+                ₺{product.compareAtPrice}
+              </span>
+            )}
           </div>
 
           {product.shortDescription && (
-            <p className="mt-4 text-neutral-700">
+            <p className="text-zinc-600 leading-6">
               {product.shortDescription}
             </p>
           )}
 
-          {product.benefits?.length ? (
-            <ul className="mt-6 list-disc space-y-2 pl-5 text-sm text-neutral-700">
+          <div className="grid gap-3">
+            <Link
+              href="/anket"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95"
+            >
+              Uzman önerisi al
+            </Link>
+
+            <Link
+              href="/magaza"
+              className="inline-flex w-full items-center justify-center rounded-2xl border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
+            >
+              Mağazaya dön
+            </Link>
+          </div>
+
+          {product.benefits && (
+            <ul className="list-disc pl-5 text-sm text-zinc-600 space-y-1">
               {product.benefits.map((b, i) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
-          ) : null}
-
-          {product.usage && (
-            <div className="mt-6">
-              <h3 className="font-semibold">Kullanım</h3>
-              <p className="mt-1 text-sm text-neutral-700">
-                {product.usage}
-              </p>
-            </div>
-          )}
-
-          {product.ingredientsNote && (
-            <div className="mt-4">
-              <h3 className="font-semibold">İçerik</h3>
-              <p className="mt-1 text-sm text-neutral-700">
-                {product.ingredientsNote}
-              </p>
-            </div>
           )}
         </div>
       </div>
