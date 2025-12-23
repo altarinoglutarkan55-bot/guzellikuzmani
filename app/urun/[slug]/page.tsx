@@ -3,13 +3,26 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import products from "../../../data/products.json";
 
-/* -------------------------------------------------- */
-/* Utils */
-/* -------------------------------------------------- */
-function normalizeSlug(input: string) {
-  return input
+/* ------------------ TYPES ------------------ */
+type ProductImage = {
+  src: string;
+  alt?: string;
+};
+
+type Product = {
+  slug: string;
+  title: string;
+  brand?: string;
+  price: number;
+  compareAtPrice?: number;
+  shortDescription?: string;
+  images?: ProductImage[];
+};
+
+/* ------------------ UTILS ------------------ */
+function normalizeSlug(str: string) {
+  return str
     .toLowerCase()
-    .trim()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")
@@ -20,23 +33,17 @@ function normalizeSlug(input: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function getSlug(p: any) {
-  return normalizeSlug(p.slug ?? p.title ?? "");
-}
-
-function getImages(p: any) {
-  if (Array.isArray(p.images) && p.images.length > 0) {
-    return p.images.map((img: any, i: number) => ({
-      src: typeof img === "string" ? img : img.src,
-      alt: img.alt ?? p.title ?? `Ürün ${i + 1}`,
+function getImages(p: Product): { src: string; alt: string }[] {
+  if (p.images && p.images.length > 0) {
+    return p.images.map((img, i) => ({
+      src: img.src,
+      alt: img.alt ?? `${p.title} ${i + 1}`,
     }));
   }
-  return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
+  return [{ src: "/demo/urun-1.jpg", alt: p.title }];
 }
 
-/* -------------------------------------------------- */
-/* Page */
-/* -------------------------------------------------- */
+/* ------------------ PAGE ------------------ */
 export default function ProductPage({
   params,
 }: {
@@ -44,8 +51,8 @@ export default function ProductPage({
 }) {
   const slug = normalizeSlug(params.slug);
 
-  const product = (products as any[]).find(
-    (p) => getSlug(p) === slug
+  const product = (products as Product[]).find(
+    (p) => normalizeSlug(p.slug) === slug
   );
 
   if (!product) {
@@ -64,7 +71,7 @@ export default function ProductPage({
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* ICON SIZE GALLERY */}
+        {/* ICON SIZE IMAGES */}
         <div className="flex flex-wrap gap-3">
           {images.map((img, i) => (
             <div
