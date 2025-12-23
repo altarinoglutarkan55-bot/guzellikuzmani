@@ -1,36 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import productsJson from "../../../data/products.json";
+import products from "../../../data/products.json";
 
-type RawProd = {
-  slug?: string;
-  title?: string;
-  brand?: string;
-  price?: number;
-  compareAtPrice?: number;
-  shortDescription?: string;
-  description?: string;
-  usage?: string;
-  benefits?: string[];
-  images?: Array<string | { src?: string; alt?: string }>;
-};
-
-type Product = {
-  slug: string;
-  title: string;
-  brand: string;
-  price: number;
-  compareAtPrice: number | null;
-  shortDescription: string;
-  usage: string;
-  benefits: string[];
-  images: { src: string; alt: string }[];
-};
-
-function normalizeSlug(input: unknown) {
-  const s = String(input ?? "").toLowerCase().trim();
-  return s
+/* -------------------------------------------------- */
+/* Utils */
+/* -------------------------------------------------- */
+function normalizeSlug(input: string) {
+  return input
+    .toLowerCase()
+    .trim()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")
@@ -41,49 +20,39 @@ function normalizeSlug(input: unknown) {
     .replace(/^-+|-+$/g, "");
 }
 
-function normalizeProduct(raw: RawProd): Product {
-  const title = String(raw.title ?? "Ürün Adı");
-
-  const images: { src: string; alt: string }[] =
-    Array.isArray(raw.images) && raw.images.length > 0
-      ? raw.images.map((img, idx) => {
-          if (typeof img === "string") {
-            return { src: img, alt: `${title} ${idx + 1}` };
-          }
-          return {
-            src: String(img.src ?? ""),
-            alt: String(img.alt ?? title),
-          };
-        })
-      : [{ src: "/demo/urun-1.jpg", alt: title }];
-
-  return {
-    slug: normalizeSlug(raw.slug ?? title),
-    title,
-    brand: String(raw.brand ?? ""),
-    price: Number(raw.price ?? 0),
-    compareAtPrice: raw.compareAtPrice ?? null,
-    shortDescription: String(raw.shortDescription ?? ""),
-    usage: String(raw.usage ?? ""),
-    benefits: Array.isArray(raw.benefits)
-      ? raw.benefits.map((b) => String(b))
-      : [],
-    images,
-  };
+function getSlug(p: any) {
+  return normalizeSlug(p.slug ?? p.title ?? "");
 }
 
+function getImages(p: any) {
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    return p.images.map((img: any, i: number) => ({
+      src: typeof img === "string" ? img : img.src,
+      alt: img.alt ?? p.title ?? `Ürün ${i + 1}`,
+    }));
+  }
+  return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
+}
+
+/* -------------------------------------------------- */
+/* Page */
+/* -------------------------------------------------- */
 export default function ProductPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const allProducts = (productsJson as RawProd[]).map(normalizeProduct);
   const slug = normalizeSlug(params.slug);
 
-  const product = allProducts.find((p) => p.slug === slug);
-  if (!product) notFound();
+  const product = (products as any[]).find(
+    (p) => getSlug(p) === slug
+  );
 
-  const { title, brand, price, compareAtPrice, shortDescription, usage, benefits, images } = product;
+  if (!product) {
+    notFound();
+  }
+
+  const images = getImages(product);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -95,7 +64,7 @@ export default function ProductPage({
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* Ürün Görselleri (ikon boyutu) */}
+        {/* ICON SIZE GALLERY */}
         <div className="flex flex-wrap gap-3">
           {images.map((img, i) => (
             <div
@@ -112,37 +81,27 @@ export default function ProductPage({
           ))}
         </div>
 
-        {/* Ürün Bilgi */}
+        {/* INFO */}
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-zinc-900">{title}</h1>
+          <h1 className="text-2xl font-bold">{product.title}</h1>
 
-          {brand && <p className="text-sm text-zinc-500">{brand}</p>}
+          {product.brand && (
+            <p className="text-sm text-zinc-500">{product.brand}</p>
+          )}
 
           <div className="flex items-center gap-3">
-            <p className="text-xl font-bold text-zinc-900">{price} ₺</p>
-            {compareAtPrice ? (
+            <p className="text-xl font-bold">{product.price} ₺</p>
+            {product.compareAtPrice && (
               <p className="text-sm line-through text-zinc-400">
-                {compareAtPrice} ₺
+                {product.compareAtPrice} ₺
               </p>
-            ) : null}
+            )}
           </div>
 
-          {shortDescription && (
-            <p className="text-sm text-zinc-600">{shortDescription}</p>
-          )}
-
-          {usage && (
+          {product.shortDescription && (
             <p className="text-sm text-zinc-600">
-              <strong>Kullanım:</strong> {usage}
+              {product.shortDescription}
             </p>
-          )}
-
-          {benefits.length > 0 && (
-            <ul className="list-disc pl-5 text-sm text-zinc-600">
-              {benefits.map((b, idx) => (
-                <li key={idx}>{b}</li>
-              ))}
-            </ul>
           )}
 
           <div className="flex gap-3 pt-4">
@@ -152,7 +111,7 @@ export default function ProductPage({
 
             <Link
               href="/anket"
-              className="rounded-xl border px-5 py-3 text-sm font-semibold text-zinc-900"
+              className="rounded-xl border px-5 py-3 text-sm font-semibold"
             >
               Uzman Önerisi Al
             </Link>
