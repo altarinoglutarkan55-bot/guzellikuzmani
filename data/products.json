@@ -1,22 +1,307 @@
 [
   {
-    "slug": "ret",
-    "title": "hger",
-    "price": 249,
-    "bullets": [
-      "Saçı ısıya karşı korur",
-      "Fön ve maşa öncesi kullanıma uygundur",
-      "Saçı ağırlaştırmaz"
+    "slug": "mor-sampuan-renk-koruyucu-300ml",
+    "title": "Mor Şampuan • Renk Koruyucu (300 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sampuan",
+    "tags": ["mor", "renk koruyucu", "sarilik giderici", "boyalı saç", "parlaklık"],
+    "price": 399,
+    "compareAtPrice": 499,
+    "images": [
+      { "src": "/demo/urun-1.jpg", "alt": "Mor şampuan" },
+      { "src": "/demo/urun-2.jpg", "alt": "Mor şampuan detay" }
     ],
-    "howTo": [
-      "Nemli veya kuru saça uygulanır",
-      "Fön veya maşa öncesi eşit şekilde sıkılır",
-      "Durulanmaz"
+    "shortDescription": "Sarı yansımaları nötralize eder, rengi daha canlı gösterir.",
+    "benefits": ["Sarı yansımayı dengeler", "Renk canlılığını korur", "Parlaklık kazandırır"],
+    "usage": "Islak saça uygula, 2-3 dk beklet, durula. Haftada 1-2 kez.",
+    "ingredientsNote": "Sülfat içermez. (Demo içerik)",
+    "hairType": ["boyalı", "röfle", "açılmış saç"]
+  },
+  {
+    "slug": "keratin-onarici-maske-250ml",
+    "title": "Keratin Onarıcı Maske (250 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "maske",
+    "tags": ["keratin", "onarım", "kırık", "kuru saç", "yıpranmış"],
+    "price": 459,
+    "compareAtPrice": 549,
+    "images": [
+      { "src": "/demo/urun-2.jpg", "alt": "Keratin maske" },
+      { "src": "/demo/urun-3.jpg", "alt": "Maske doku" }
     ],
-    "tags": [
-      "ısı",
-      "fön",
-      "maşa"
-    ]
+    "shortDescription": "Yıpranmış saçları daha pürüzsüz ve güçlü hissettirir.",
+    "benefits": ["Onarım hissi", "Kolay tarama", "Yumuşaklık"],
+    "usage": "Şampuan sonrası 5-10 dk beklet, durula. Haftada 1-2 kez.",
+    "ingredientsNote": "Keratin + amino asit kompleksi (Demo içerik)",
+    "hairType": ["kuru", "yıpranmış", "boyalı"]
+  },
+  {
+    "slug": "argan-yag-serumu-50ml",
+    "title": "Argan Yağ Serum (50 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "serum",
+    "tags": ["argan", "parlaklık", "elektriklenme", "uclar", "anti-frizz"],
+    "price": 329,
+    "compareAtPrice": 399,
+    "images": [
+      { "src": "/demo/urun-3.jpg", "alt": "Argan serum" }
+    ],
+    "shortDescription": "Elektriklenmeyi azaltır, uçlara parlaklık verir.",
+    "benefits": ["Anti-frizz", "Parlak görünüm", "Uçları yumuşatır"],
+    "usage": "Nemli veya kuru saça 1-2 pompa, özellikle uçlara.",
+    "ingredientsNote": "Argan + hafif silikon karışımı (Demo içerik)",
+    "hairType": ["tüm saç tipleri"]
+  },
+  {
+    "slug": "isi-koruyucu-sprey-200ml",
+    "title": "Isı Koruyucu Sprey (200 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "isi-koruyucu",
+    "tags": ["ısı koruyucu", "fön", "maşa", "düzleştirici", "koruma"],
+    "price": 349,
+    "compareAtPrice": 449,
+    "images": [
+      { "src": "/demo/urun-4.jpg", "alt": "Isı koruyucu sprey" }
+    ],
+    "shortDescription": "Fön/maşa öncesi saç yüzeyini korumaya yardımcı olur.",
+    "benefits": ["Isı hasarını azaltmaya yardımcı", "Daha pürüzsüz bitiş", "Kabarmayı azaltır"],
+    "usage": "Kurutma/şekillendirme öncesi nemli saça sık, tara.",
+    "ingredientsNote": "Film oluşturan polimerler (Demo içerik)",
+    "hairType": ["tüm saç tipleri"]
+  },
+  {
+    "slug": "sac-derisi-tonigi-100ml",
+    "title": "Saç Derisi Tonik (100 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sac-derisi",
+    "tags": ["saç derisi", "tonik", "ferahlık", "sebum", "bakım"],
+    "price": 389,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-1.jpg", "alt": "Saç derisi tonik" }
+    ],
+    "shortDescription": "Saç derisini ferah hissettirir, bakım rutinini destekler.",
+    "benefits": ["Ferahlatıcı his", "Rutin desteği", "Günlük kullanım"],
+    "usage": "Temiz saç derisine masaj yaparak uygula. Durulama yok.",
+    "ingredientsNote": "Niasinamid + bitkisel özler (Demo içerik)",
+    "hairType": ["yağlı saç derisi", "karma"]
+  },
+  {
+    "slug": "hacimlendirici-sampuan-350ml",
+    "title": "Hacimlendirici Şampuan (350 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sampuan",
+    "tags": ["hacim", "ince telli", "kök kaldırma", "hafif"],
+    "price": 369,
+    "compareAtPrice": 429,
+    "images": [
+      { "src": "/demo/urun-2.jpg", "alt": "Hacim şampuan" }
+    ],
+    "shortDescription": "İnce telli saçlarda daha dolgun görünüm hedefler.",
+    "benefits": ["Daha hafif his", "Dolgun görünüm", "Köklerde canlılık"],
+    "usage": "Günlük kullanıma uygun. İki kez şampuanla.",
+    "ingredientsNote": "Protein + hafif temizleyiciler (Demo içerik)",
+    "hairType": ["ince telli"]
+  },
+  {
+    "slug": "nemlendirici-sampuan-350ml",
+    "title": "Nemlendirici Şampuan (350 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sampuan",
+    "tags": ["nem", "kuru saç", "yumuşaklık", "bakım"],
+    "price": 359,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-3.jpg", "alt": "Nem şampuan" }
+    ],
+    "shortDescription": "Kuruluk hissini azaltmaya yardımcı, daha yumuşak bitiş.",
+    "benefits": ["Yumuşaklık", "Kolay tarama", "Nem desteği"],
+    "usage": "Islak saça uygula, durula. İstersen tekrarla.",
+    "ingredientsNote": "Gliserin + pantenol (Demo içerik)",
+    "hairType": ["kuru", "normal"]
+  },
+  {
+    "slug": "sekillendirici-krem-150ml",
+    "title": "Şekillendirici Krem (150 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sekillendirici",
+    "tags": ["şekillendirici", "bukle", "krem", "anti-frizz", "tanım"],
+    "price": 299,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-4.jpg", "alt": "Şekillendirici krem" }
+    ],
+    "shortDescription": "Bukleleri belirginleştirir, kabarmayı azaltmaya yardımcı olur.",
+    "benefits": ["Bukle tanımı", "Kabarmayı azaltır", "Doğal bitiş"],
+    "usage": "Nemli saça uygula, scrunch yap. Difüzörle kurut.",
+    "ingredientsNote": "Hafif polimer + bitkisel yağlar (Demo içerik)",
+    "hairType": ["kıvırcık", "dalgalı"]
+  },
+  {
+    "slug": "tuzsuz-sampuan-keratin-sonrasi-300ml",
+    "title": "Tuzsuz Şampuan • Keratin Sonrası (300 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sampuan",
+    "tags": ["tuzsuz", "keratin", "brazilya fon", "uzun süre", "koruma"],
+    "price": 419,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-1.jpg", "alt": "Tuzsuz şampuan" }
+    ],
+    "shortDescription": "Keratin/Brezilya fönü sonrası rutini destekler.",
+    "benefits": ["Bakım rutini desteği", "Daha pürüzsüz his", "Uygun temizlik"],
+    "usage": "Haftada 2-4 kez. Ilık su ile uygula.",
+    "ingredientsNote": "Sodyum klorür içermez (Demo içerik)",
+    "hairType": ["işlem görmüş"]
+  },
+  {
+    "slug": "onari-ci-bakim-sutu-200ml",
+    "title": "Onarıcı Bakım Sütü (200 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "serum",
+    "tags": ["leave-in", "onarım", "kolay tarama", "bakım sütü"],
+    "price": 339,
+    "compareAtPrice": 399,
+    "images": [
+      { "src": "/demo/urun-2.jpg", "alt": "Bakım sütü" }
+    ],
+    "shortDescription": "Durulanmayan bakım: kolay tarama ve yumuşaklık.",
+    "benefits": ["Kolay tarama", "Yumuşak bitiş", "Günlük kullanım"],
+    "usage": "Nemli saça 3-6 fıs, tarayıp kurut.",
+    "ingredientsNote": "Pantenol + hafif yağlar (Demo içerik)",
+    "hairType": ["tüm saç tipleri"]
+  },
+  {
+    "slug": "canlandirici-parlaklik-spreyi-150ml",
+    "title": "Parlaklık Spreyi (150 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sekillendirici",
+    "tags": ["parlaklık", "finish", "son dokunuş", "ışıl"],
+    "price": 279,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-3.jpg", "alt": "Parlaklık spreyi" }
+    ],
+    "shortDescription": "Son dokunuş: daha parlak ve canlı görünüm.",
+    "benefits": ["Işıltı etkisi", "Hafif uygulama", "Günlük kullanım"],
+    "usage": "Kuru saçta 20-30 cm mesafeden hafifçe sık.",
+    "ingredientsNote": "Hafif uçucu taşıyıcılar (Demo içerik)",
+    "hairType": ["tüm saç tipleri"]
+  },
+  {
+    "slug": "kepek-karsiti-sampuan-300ml",
+    "title": "Kepek Karşıtı Şampuan (300 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sampuan",
+    "tags": ["kepek", "saç derisi", "temizlik", "bakım"],
+    "price": 389,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-4.jpg", "alt": "Kepek karşıtı şampuan" }
+    ],
+    "shortDescription": "Saç derisi rutinini desteklemeye yardımcı şampuan.",
+    "benefits": ["Temiz his", "Düzenli kullanıma uygun", "Rutin desteği"],
+    "usage": "Haftada 2-3 kez. Saç derisine masaj yaparak.",
+    "ingredientsNote": "Piroctone olamine (Demo içerik)",
+    "hairType": ["kepeğe yatkın"]
+  },
+  {
+    "slug": "erkek-gunluk-sampuan-400ml",
+    "title": "Erkek Günlük Şampuan (400 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "erkek",
+    "tags": ["erkek", "günlük", "ferah", "temiz"],
+    "price": 329,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-1.jpg", "alt": "Erkek şampuan" }
+    ],
+    "shortDescription": "Günlük kullanım için ferah ve temiz his.",
+    "benefits": ["Ferah his", "Günlük kullanım", "Kolay durulanır"],
+    "usage": "Günlük kullanıma uygun.",
+    "ingredientsNote": "Mentol hissi (Demo içerik)",
+    "hairType": ["tüm saç tipleri"]
+  },
+  {
+    "slug": "cocuk-sampuan-goz-yakmaz-300ml",
+    "title": "Çocuk Şampuanı • Göz Yakmaz (300 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "cocuk",
+    "tags": ["çocuk", "nazik", "göz yakmaz", "hassas"],
+    "price": 299,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-2.jpg", "alt": "Çocuk şampuan" }
+    ],
+    "shortDescription": "Nazik temizlik; çocuklar için uygun formül (demo).",
+    "benefits": ["Nazik temizlik", "Hassas saç derisi", "Kolay durulanır"],
+    "usage": "Az miktar uygula, köpürt, durula.",
+    "ingredientsNote": "SLS/SLES düşük (Demo içerik)",
+    "hairType": ["hassas"]
+  },
+  {
+    "slug": "cilt-nemlendirici-krem-50ml",
+    "title": "Cilt Nemlendirici Krem (50 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "cilt",
+    "tags": ["cilt", "nem", "bariyer", "hassas"],
+    "price": 449,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-3.jpg", "alt": "Cilt kremi" }
+    ],
+    "shortDescription": "Günlük nem desteği; yumuşak doku (demo).",
+    "benefits": ["Nem desteği", "Bariyer desteği", "Günlük kullanım"],
+    "usage": "Sabah/akşam temiz cilde uygula.",
+    "ingredientsNote": "Seramid + hyaluronik asit (Demo içerik)"
+  },
+  {
+    "slug": "makyaj-dudak-nemlendirici-balm",
+    "title": "Dudak Nemlendirici Balm",
+    "brand": "Güzellik Uzmanı",
+    "category": "makyaj",
+    "tags": ["balm", "dudak", "nem", "parlak"],
+    "price": 229,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-4.jpg", "alt": "Dudak balm" }
+    ],
+    "shortDescription": "Yumuşak ve parlak bitiş; günlük kullanım (demo).",
+    "benefits": ["Nem hissi", "Parlak bitiş", "Kolay uygulama"],
+    "usage": "Gün içinde ihtiyaç oldukça uygula.",
+    "ingredientsNote": "Shea + E vitamini (Demo içerik)"
+  },
+  {
+    "slug": "sac-ucu-onarici-krem-100ml",
+    "title": "Saç Ucu Onarıcı Krem (100 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "serum",
+    "tags": ["kırık", "uçlar", "onarım", "yumuşaklık"],
+    "price": 319,
+    "compareAtPrice": 379,
+    "images": [
+      { "src": "/demo/urun-1.jpg", "alt": "Saç ucu kremi" }
+    ],
+    "shortDescription": "Kırık uç görünümünü azaltmaya yardımcı bakım kremi.",
+    "benefits": ["Uçlara bakım", "Yumuşaklık", "Daha pürüzsüz görünüm"],
+    "usage": "Kuru/ıslak uçlara az miktar uygula.",
+    "ingredientsNote": "Bitkisel yağ + polimer (Demo içerik)",
+    "hairType": ["kuru", "yıpranmış"]
+  },
+  {
+    "slug": "sac-parfumu-100ml",
+    "title": "Saç Parfümü (100 ml)",
+    "brand": "Güzellik Uzmanı",
+    "category": "sekillendirici",
+    "tags": ["koku", "tazelik", "günlük", "fresh"],
+    "price": 299,
+    "compareAtPrice": 0,
+    "images": [
+      { "src": "/demo/urun-2.jpg", "alt": "Saç parfümü" }
+    ],
+    "shortDescription": "Gün boyu ferah koku hissi (demo).",
+    "benefits": ["Tazelik hissi", "Günlük kullanım", "Hafif"],
+    "usage": "Saça 20-30 cm’den sık. Göze temas ettirmeyin.",
+    "ingredientsNote": "Alkol oranı düşük (Demo içerik)"
   }
 ]
