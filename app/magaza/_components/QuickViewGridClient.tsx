@@ -14,7 +14,10 @@ type Item = {
 };
 
 function formatTRY(n: number) {
-  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+  }).format(n);
 }
 
 function cn(...s: Array<string | false | null | undefined>) {
@@ -25,7 +28,10 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
   const [open, setOpen] = useState(false);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-  const active = useMemo(() => items.find((x) => x.slug === activeSlug) ?? null, [items, activeSlug]);
+  const active = useMemo(
+    () => items.find((x) => x.slug === activeSlug) ?? null,
+    [items, activeSlug]
+  );
 
   const openModal = (slug: string) => {
     setActiveSlug(slug);
@@ -40,21 +46,23 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
 
   return (
     <>
+      {/* GRID */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
           <div
             key={p.slug}
-            className="group relative rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+            className="group relative rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:shadow-md"
           >
             <Link href={`/urun/${p.slug}`} className="block">
               <div className="relative overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
-                <div className="relative aspect-square">
+                {/* GÖRSEL %50 KÜÇÜLTÜLDÜ */}
+                <div className="relative mx-auto aspect-square w-1/2">
                   <Image
                     src={p.img}
                     alt={p.title}
                     fill
                     className="object-cover"
-                    sizes="(min-width: 1024px) 280px, 50vw"
+                    sizes="(min-width: 1024px) 140px, 50vw"
                   />
                 </div>
 
@@ -68,10 +76,15 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
               <p className="mt-3 line-clamp-2 text-sm font-semibold text-zinc-900 group-hover:text-[#7C3AED]">
                 {p.title}
               </p>
-              <p className="mt-1 text-sm font-bold text-zinc-900">{formatTRY(p.price)}</p>
-              <p className="mt-1 text-xs text-zinc-500">{p.category.replaceAll("-", " ")}</p>
+              <p className="mt-1 text-sm font-bold text-zinc-900">
+                {formatTRY(p.price)}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                {p.category.replaceAll("-", " ")}
+              </p>
             </Link>
 
+            {/* QUICK VIEW */}
             <button
               type="button"
               onClick={() => openModal(p.slug)}
@@ -87,6 +100,7 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
         ))}
       </div>
 
+      {/* MODAL */}
       {open && active ? (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center"
@@ -110,13 +124,14 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
 
             <div className="grid gap-6 p-5 md:grid-cols-2">
               <div className="relative overflow-hidden rounded-3xl bg-zinc-50 ring-1 ring-zinc-200">
-                <div className="relative aspect-square">
+                {/* MODAL GÖRSELİ DE %50 */}
+                <div className="relative mx-auto aspect-square w-1/2">
                   <Image
                     src={active.img}
                     alt={active.title}
                     fill
                     className="object-cover"
-                    sizes="(min-width: 768px) 420px, 100vw"
+                    sizes="(min-width: 768px) 210px, 100vw"
                     priority
                   />
                 </div>
@@ -127,16 +142,18 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
                   <p className="text-xs font-semibold tracking-wide text-zinc-500">
                     {active.category.replaceAll("-", " ").toUpperCase()}
                   </p>
-                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">{active.title}</h3>
-                  <p className="mt-2 text-lg font-bold text-zinc-900">{formatTRY(active.price)}</p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">
+                    {active.title}
+                  </h3>
+                  <p className="mt-2 text-lg font-bold text-zinc-900">
+                    {formatTRY(active.price)}
+                  </p>
                 </div>
 
                 <div className="grid gap-2">
                   <Link
                     href={`/urun/${active.slug}`}
-                    onClick={() => {
-                      document.body.style.overflow = "";
-                    }}
+                    onClick={() => (document.body.style.overflow = "")}
                     className="inline-flex w-full items-center justify-center rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-95"
                   >
                     Ürün Sayfasına Git
@@ -144,9 +161,7 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
 
                   <Link
                     href="/anket"
-                    onClick={() => {
-                      document.body.style.overflow = "";
-                    }}
+                    onClick={() => (document.body.style.overflow = "")}
                     className="inline-flex w-full items-center justify-center rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 hover:border-zinc-300"
                   >
                     Uzman önerisi al
@@ -154,13 +169,20 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
                 </div>
 
                 <p className="text-sm leading-6 text-zinc-600">
-                  Mini açıklama: Bu ürün kategorisine göre hızlı çözüm sunar. Detaylar ürün sayfasında.
+                  Mini açıklama: Bu ürün kategorisine göre hızlı çözüm sunar.
+                  Detaylar ürün sayfasında.
                 </p>
 
                 <div className="grid grid-cols-3 gap-2 text-center text-xs text-zinc-600">
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">Güvenli ödeme</div>
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">Kolay iade</div>
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">Hızlı destek</div>
+                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
+                    Güvenli ödeme
+                  </div>
+                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
+                    Kolay iade
+                  </div>
+                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
+                    Hızlı destek
+                  </div>
                 </div>
               </div>
             </div>
