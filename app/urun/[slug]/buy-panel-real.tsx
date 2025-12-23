@@ -1,5 +1,4 @@
-// app/urun/[slug]/buy-panel-real.tsx
-"use client";
+﻿"use client";
 
 import { useCart } from "@/app/providers";
 
@@ -14,33 +13,52 @@ export default function BuyPanelReal({
   price: number;
   image?: string;
 }) {
-  const { add } = useCart();
+  const { add, open } = useCart();
 
   return (
-    <div className="mt-6 grid gap-2">
-      <button
-        onClick={() => add({ id, title, price, image })}
-        className="btn-primary w-full py-3"
-      >
-        Sepete Ekle
-      </button>
+    <div className="mt-4 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold text-zinc-700">Fiyat</div>
+        <div className="text-lg font-extrabold text-zinc-900">
+          {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(price)}
+        </div>
+      </div>
 
-      <button
-        onClick={() => {
-          add({ id, title, price, image });
-          alert("Ödeme (demo) — sepet açıldı.");
-        }}
-        className="w-full rounded-xl bg-[#DB2777] px-4 py-3 text-sm font-extrabold text-white hover:opacity-95"
-      >
-        Hemen Al
-      </button>
+      <div className="mt-3 grid gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            add({ id, title, price, image }, 1);
+            open();
+          }}
+          className="w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-extrabold text-white hover:opacity-95"
+        >
+          Sepete Ekle
+        </button>
 
-      <a
-        href="/anket"
-        className="btn-ghost w-full py-3 text-center"
-      >
-        Uzman Önerisi Al
-      </a>
+        <button
+          type="button"
+          onClick={() => {
+            add({ id, title, price, image }, 1);
+            open();
+            alert("Ödeme (demo) — sepet açıldı.");
+          }}
+          className="w-full rounded-2xl bg-[#DB2777] px-4 py-3 text-sm font-extrabold text-white hover:opacity-95"
+        >
+          Hemen Al
+        </button>
+
+        <a
+          href="/anket"
+          className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-center text-sm font-semibold text-zinc-900 hover:border-zinc-300"
+        >
+          Uzman Önerisi Al
+        </a>
+      </div>
+
+      <div className="mt-3 text-xs text-zinc-500">
+        * Demo sepet. Ödeme entegrasyonu daha sonra.
+      </div>
     </div>
   );
 }
