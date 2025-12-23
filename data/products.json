@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "ret",
+    "title": "hger",
+    "price": 249,
+    "bullets": [
+      "Saçı ısıya karşı korur",
+      "Fön ve maşa öncesi kullanıma uygundur",
+      "Saçı ağırlaştırmaz"
+    ],
+    "howTo": [
+      "Nemli veya kuru saça uygulanır",
+      "Fön veya maşa öncesi eşit şekilde sıkılır",
+      "Durulanmaz"
+    ],
+    "tags": [
+      "ısı",
+      "fön",
+      "maşa"
+    ]
+  }
+]
