@@ -1,39 +1,72 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import products from "../../../data/products.json";
+import rawProducts from "../../../data/products.json";
 
-type ProductImage = {
-  src: string;
-  alt?: string;
+type RawProduct = {
+  slug?: string;
+  title?: string;
+  name?: string;
+  brand?: string;
+  price?: number;
+  compareAtPrice?: number | null;
+  shortDescription?: string;
+  description?: string;
+  benefits?: string[];
+  images?: Array<string | { src: string; alt?: string }>;
 };
 
 type Product = {
   slug: string;
   title: string;
-  brand?: string;
+  brand: string;
   price: number;
   compareAtPrice?: number | null;
-  shortDescription?: string;
-  description?: string;
-  images?: ProductImage[];
-  benefits?: string[];
-  usage?: string;
-  category?: string;
+  shortDescription: string;
+  benefits: string[];
+  images: { src: string; alt: string }[];
 };
 
-function normalizeSlug(str: string) {
-  return str
+function normalizeSlug(s: string) {
+  return s
     .toLowerCase()
-    .trim()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")
     .replace(/ı/g, "i")
     .replace(/ö/g, "o")
     .replace(/ç/g, "c")
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function normalizeProduct(p: RawProduct): Product {
+  const title = p.title || p.name || "Ürün";
+
+  const images =
+    p.images?.map((img, i) => {
+      if (typeof img === "string") {
+        return {
+          src: img,
+          alt: `${title} ${i + 1}`,
+        };
+      }
+      return {
+        src: img.src,
+        alt: img.alt || `${title} ${i + 1}`,
+      };
+    }) ?? [];
+
+  return {
+    slug: normalizeSlug(p.slug || title),
+    title,
+    brand: p.brand || "",
+    price: Number(p.price || 0),
+    compareAtPrice: p.compareAtPrice ?? null,
+    shortDescription: p.shortDescription || "",
+    benefits: Array.isArray(p.benefits) ? p.benefits : [],
+    images,
+  };
 }
 
 export default function ProductPage({
@@ -43,19 +76,13 @@ export default function ProductPage({
 }) {
   const slug = normalizeSlug(params.slug);
 
-  const product = (products as Product[]).find(
-    (p) => normalizeSlug(p.slug) === slug
-  );
+  const products = (rawProducts as RawProduct[]).map(normalizeProduct);
 
-  if (!product) notFound();
+  const product = products.find((p) => p.slug === slug);
 
-  const images =
-    product.images?.map((img, i) => ({
-      src: img.src,
-      alt: img.alt ?? `${product.title} ${i + 1}`,
-    })) ?? [];
-
-  const benefits: string[] = product.benefits ?? [];
+  if (!product) {
+    notFound();
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -67,12 +94,12 @@ export default function ProductPage({
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* GÖRSELLER – İKON BOYUTU */}
+        {/* GÖRSELLER – İKON BOYUT */}
         <div className="flex flex-wrap gap-3">
-          {images.map((img, i) => (
+          {product.images.map((img, i) => (
             <div
               key={i}
-              className="relative h-24 w-24 overflow-hidden rounded-xl border bg-zinc-50"
+              className="relative h-16 w-16 overflow-hidden rounded-lg border bg-zinc-50"
             >
               <Image
                 src={img.src}
@@ -84,7 +111,7 @@ export default function ProductPage({
           ))}
         </div>
 
-        {/* BİLGİLER */}
+        {/* ÜRÜN BİLGİSİ */}
         <div className="space-y-4">
           <h1 className="text-2xl font-bold text-zinc-900">
             {product.title}
@@ -111,9 +138,9 @@ export default function ProductPage({
             </p>
           )}
 
-          {benefits.length > 0 && (
+          {product.benefits.length > 0 && (
             <ul className="list-disc pl-5 text-sm text-zinc-600">
-              {benefits.map((b: string, i: number) => (
+              {product.benefits.map((b: string, i: number) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
