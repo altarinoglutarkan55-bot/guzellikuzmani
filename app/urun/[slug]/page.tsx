@@ -3,12 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import products from "../../../data/products.json";
 
-/* ---------------- TYPES ---------------- */
-type ProductImage = {
-  src: string;
-  alt?: string;
-};
-
+type ProductImage = { src: string; alt?: string };
 type Product = {
   slug: string;
   title: string;
@@ -19,7 +14,6 @@ type Product = {
   images?: ProductImage[];
 };
 
-/* ---------------- PAGE ---------------- */
 export default async function ProductPage({
   params,
 }: {
@@ -27,13 +21,8 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
 
-  const product = (products as Product[]).find(
-    (p) => p.slug === slug
-  );
-
-  if (!product) {
-    notFound();
-  }
+  const product = (products as Product[]).find((p) => p.slug === slug);
+  if (!product) notFound();
 
   const images =
     product.images && product.images.length > 0
@@ -45,26 +34,25 @@ export default async function ProductPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <Link
-        href="/magaza"
-        className="mb-6 inline-block text-sm text-zinc-600 hover:underline"
-      >
+      <Link href="/magaza" className="mb-6 inline-block text-sm text-zinc-600 hover:underline">
         ← Mağazaya dön
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* ICON SIZE IMAGES */}
+        {/* ICON SIZE IMAGE STRIP (görünür garantili) */}
         <div className="flex flex-wrap gap-3">
           {images.map((img, i) => (
             <div
               key={i}
-              className="relative h-20 w-20 overflow-hidden rounded-lg border bg-zinc-50"
+              className="relative h-24 w-24 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
             >
               <Image
                 src={img.src}
                 alt={img.alt}
                 fill
-                className="object-contain"
+                className="object-cover"
+                sizes="96px"
+                priority={i === 0}
               />
             </div>
           ))}
@@ -72,35 +60,29 @@ export default async function ProductPage({
 
         {/* INFO */}
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold">{product.title}</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">{product.title}</h1>
 
-          {product.brand && (
-            <p className="text-sm text-zinc-500">{product.brand}</p>
-          )}
+          {product.brand ? <p className="text-sm text-zinc-500">{product.brand}</p> : null}
 
           <div className="flex items-center gap-3">
-            <p className="text-xl font-bold">{product.price} ₺</p>
-            {product.compareAtPrice && (
-              <p className="text-sm line-through text-zinc-400">
-                {product.compareAtPrice} ₺
-              </p>
-            )}
+            <p className="text-xl font-bold text-zinc-900">{product.price} ₺</p>
+            {product.compareAtPrice ? (
+              <p className="text-sm line-through text-zinc-400">{product.compareAtPrice} ₺</p>
+            ) : null}
           </div>
 
-          {product.shortDescription && (
-            <p className="text-sm text-zinc-600">
-              {product.shortDescription}
-            </p>
-          )}
+          {product.shortDescription ? (
+            <p className="text-sm leading-6 text-zinc-600">{product.shortDescription}</p>
+          ) : null}
 
           <div className="flex gap-3 pt-4">
-            <button className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white">
+            <button className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95">
               Sepete Ekle
             </button>
 
             <Link
               href="/anket"
-              className="rounded-xl border px-5 py-3 text-sm font-semibold"
+              className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 hover:border-zinc-300"
             >
               Uzman Önerisi Al
             </Link>
