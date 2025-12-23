@@ -1,70 +1,50 @@
-// lib/products.ts
+import products from "@/data/products.json";
+
 export type Product = {
   slug: string;
   title: string;
+  brand?: string;
+  category?: string;
   price: number;
-  bullets: string[];
-  howto: string[];
+  compareAtPrice?: number | null;
+  images?: { src: string; alt?: string }[];
   tags?: string[];
 };
 
-// Demo "DB" (memory). Vercel'de yeniden deploy olunca sıfırlanır.
-let PRODUCTS: Product[] = [
-  {
-    slug: "isi-koruyucu-sprey",
-    title: "Isı Koruyucu Sprey",
-    price: 249,
-    bullets: [
-      "Saçı ısıya karşı korur",
-      "Fön ve maşa öncesi kullanıma uygundur",
-      "Saçı ağırlaştırmaz",
-    ],
-    howto: [
-      "Nemli veya kuru saça uygulanır",
-      "Fön veya maşa öncesi eşit şekilde sıkılır",
-      "Durulanmaz",
-    ],
-    tags: ["ısı", "fön", "maşa"],
-  },
-  {
-    slug: "keratin-bakim-seti",
-    title: "Keratin Bakım Seti",
-    price: 499,
-    bullets: [
-      "Yıpranmış saç görünümünü toparlamaya yardımcı",
-      "Elektriklenmeyi azaltmaya yardımcı",
-      "Daha yumuşak tarama hissi",
-    ],
-    howto: [
-      "Şampuanla yıka ve durula",
-      "Maskeyi 5–10 dk beklet, durula",
-      "Serumu nemli saç uçlarına uygula (durulanmaz)",
-    ],
-    tags: ["keratin", "onarım"],
-  },
-];
+function normalize(s: string) {
+  return s.toLowerCase().trim();
+}
 
 export function getAllProducts(): Product[] {
-  return PRODUCTS;
+  return products as Product[];
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
-  return PRODUCTS.find((p) => p.slug === slug);
+  return (products as Product[]).find((p) => p.slug === slug);
 }
 
-export function addProduct(product: Product): Product {
-  // slug aynıysa güncelle
-  const idx = PRODUCTS.findIndex((p) => p.slug === product.slug);
-  if (idx >= 0) {
-    PRODUCTS[idx] = product;
-    return PRODUCTS[idx];
+export function searchProducts({
+  q,
+  category,
+}: {
+  q?: string;
+  category?: string;
+}): Product[] {
+  let list = products as Product[];
+
+  if (q) {
+    const qq = normalize(q);
+    list = list.filter((p) =>
+      normalize(
+        `${p.title} ${p.brand ?? ""} ${(p.tags ?? []).join(" ")}`
+      ).includes(qq)
+    );
   }
-  PRODUCTS = [product, ...PRODUCTS];
-  return product;
-}
 
-export function deleteProduct(slug: string): boolean {
-  const before = PRODUCTS.length;
-  PRODUCTS = PRODUCTS.filter((p) => p.slug !== slug);
-  return PRODUCTS.length !== before;
+  if (category) {
+    const c = normalize(category);
+    list = list.filter((p) => normalize(p.category ?? "") === c);
+  }
+
+  return list;
 }
