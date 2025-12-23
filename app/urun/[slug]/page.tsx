@@ -1,4 +1,4 @@
-// app/urun/[slug]/page.tsx
+﻿// app/urun/[slug]/page.tsx
 import Link from "next/link";
 import products from "@/data/products.json";
 import Gallery from "./_components/Gallery";
@@ -26,7 +26,7 @@ function normalizeSlug(input: unknown) {
 }
 
 function getTitle(p: Product) {
-  return String(p.title ?? p.name ?? "Ürün");
+  return String(p.title ?? p.name ?? "ÃœrÃ¼n");
 }
 
 function getImages(p: Product): Img[] {
@@ -57,18 +57,18 @@ export default async function ProductPage({
   if (!product) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-zinc-900">Ürün bulunamadı</h1>
-        <p className="mt-2 text-zinc-600">Bu ürün linki hatalı olabilir ya da ürün henüz eklenmemiş olabilir.</p>
+        <h1 className="text-2xl font-bold text-zinc-900">ÃœrÃ¼n bulunamadÄ±</h1>
+        <p className="mt-2 text-zinc-600">Bu Ã¼rÃ¼n linki hatalÄ± olabilir ya da Ã¼rÃ¼n henÃ¼z eklenmemiÅŸ olabilir.</p>
         <div className="mt-6 flex gap-3">
           <Link href="/magaza" className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white">
-            Mağazaya git
+            MaÄŸazaya git
           </Link>
           <Link href="/" className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900">
             Ana sayfa
           </Link>
         </div>
         <p className="mt-6 text-xs text-zinc-500">
-          İstenen slug: <span className="font-mono">{resolvedParams.slug}</span>
+          Ä°stenen slug: <span className="font-mono">{resolvedParams.slug}</span>
         </p>
       </main>
     );
@@ -88,7 +88,7 @@ export default async function ProductPage({
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <Link href="/magaza" className="mb-6 inline-block text-sm text-zinc-600 hover:underline">
-        ← Mağazaya dön
+        â† MaÄŸazaya dÃ¶n
       </Link>
 
       <div className="grid gap-10 lg:grid-cols-12">
@@ -99,15 +99,15 @@ export default async function ProductPage({
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
             <p className="text-xs font-semibold tracking-wide text-zinc-500">
-              {brand ? brand.toUpperCase() : "GÜZELLİK UZMANI"}
+              {brand ? brand.toUpperCase() : "GÃœZELLÄ°K UZMANI"}
             </p>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{title}</h1>
 
             <div className="mt-3 flex items-end gap-3">
-              <div className="text-2xl font-extrabold text-zinc-900">₺{price}</div>
+              <div className="text-2xl font-extrabold text-zinc-900">â‚º{price}</div>
               {compareAtPrice ? (
-                <div className="text-sm font-semibold text-zinc-400 line-through">₺{compareAtPrice}</div>
+                <div className="text-sm font-semibold text-zinc-400 line-through">â‚º{compareAtPrice}</div>
               ) : null}
               {compareAtPrice && compareAtPrice > price ? (
                 <span className="badge">%{Math.round(((compareAtPrice - price) / compareAtPrice) * 100)} indirim</span>
@@ -115,7 +115,7 @@ export default async function ProductPage({
             </div>
 
             <p className="mt-4 text-sm leading-6 text-zinc-600">
-              {product.shortDescription || "Uzman önerisiyle doğru rutini kur. Hızlı sonuç, temiz içerik (demo)."}
+              {product.shortDescription || "Uzman Ã¶nerisiyle doÄŸru rutini kur. HÄ±zlÄ± sonuÃ§, temiz iÃ§erik (demo)."}
             </p>
 
             <BuyPanelReal
@@ -130,7 +130,7 @@ export default async function ProductPage({
             </div>
 
             <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
-              ✅ Aynı gün kargo (demo) • ✅ Kolay iade (demo) • ✅ Güvenli ödeme (demo)
+              âœ… AynÄ± gÃ¼n kargo (demo) â€¢ âœ… Kolay iade (demo) â€¢ âœ… GÃ¼venli Ã¶deme (demo)
             </div>
           </div>
         </div>
@@ -138,3 +138,4 @@ export default async function ProductPage({
     </main>
   );
 }
+
