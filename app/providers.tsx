@@ -1,74 +1,108 @@
-// app/providers.tsx
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { CartItem } from "@/lib/cart";
-import { readCart, writeCart } from "@/lib/cart";
+
+type CartItem = {
+  id: string;
+  title: string;
+  price: number;
+  image?: string;
+  qty: number;
+};
+
+type AddItem = {
+  id: string;
+  title: string;
+  price: number;
+  image?: string;
+};
 
 type CartCtx = {
   items: CartItem[];
   count: number;
-  total: number;
+  subtotal: number;
+
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  add: (item: Omit<CartItem, "qty">, qty?: number) => void;
+
+  add: (item: AddItem, qty?: number) => void;
   inc: (id: string) => void;
   dec: (id: string) => void;
   remove: (id: string) => void;
   clear: () => void;
 };
 
-const Ctx = createContext<CartCtx | null>(null);
+const CartContext = createContext<CartCtx | null>(null);
 
-export function useCart() {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("useCart must be used within Providers");
-  return v;
-}
+const STORAGE_KEY = "guzellikuzmani_cart_v1";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Load from storage
   useEffect(() => {
-    setItems(readCart());
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setItems(parsed);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
+  // Save to storage
   useEffect(() => {
-    writeCart(items);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // ignore
+    }
   }, [items]);
 
-  const count = useMemo(() => items.reduce((a, b) => a + (b.qty || 0), 0), [items]);
-  const total = useMemo(() => items.reduce((a, b) => a + (b.price || 0) * (b.qty || 0), 0), [items]);
+  const count = useMemo(() => items.reduce((a, x) => a + (x.qty ?? 0), 0), [items]);
+  const subtotal = useMemo(() => items.reduce((a, x) => a + (x.price ?? 0) * (x.qty ?? 0), 0), [items]);
 
-  const api: CartCtx = {
+  const value: CartCtx = {
     items,
     count,
-    total,
+    subtotal,
+
     isOpen,
     open: () => setIsOpen(true),
     close: () => setIsOpen(false),
 
     add: (item, qty = 1) => {
-      const id = item.id;
       setItems((prev) => {
-        const idx = prev.findIndex((x) => x.id === id);
+        const q = Math.max(1, Number(qty) || 1);
+        const idx = prev.findIndex((x) => x.id === item.id);
         if (idx >= 0) {
-          const copy = [...prev];
-          copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty };
-          return copy;
+          const next = [...prev];
+          next[idx] = { ...next[idx], qty: next[idx].qty + q };
+          return next;
         }
-        return [...prev, { ...item, qty }];
+        return [...prev, { ...item, qty: q }];
       });
-      setIsOpen(true);
     },
 
-    inc: (id) => setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
-    dec: (id) => setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))),
+    inc: (id) =>
+      setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
+
+    dec: (id) =>
+      setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))),
+
     remove: (id) => setItems((p) => p.filter((x) => x.id !== id)),
     clear: () => setItems([]),
   };
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used within <Providers />");
+  return ctx;
 }
