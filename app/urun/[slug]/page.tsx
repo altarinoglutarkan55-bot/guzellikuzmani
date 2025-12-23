@@ -24,14 +24,24 @@ export default async function ProductPage({
 
   const pct = discountPercent(product.price, product.compareAtPrice ?? null);
 
+  // ✅ Gallery'nin istediği tip: {src:string; alt:string}[]
+  const galleryImages = product.images.map((img) => ({
+    src: img.src,
+    alt: img.alt ?? product.title,
+  }));
+
   return (
     <main className="min-h-screen bg-white text-zinc-900">
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-zinc-500">
-          <Link href="/" className="hover:text-zinc-800">Ana sayfa</Link>
+          <Link href="/" className="hover:text-zinc-800">
+            Ana sayfa
+          </Link>
           <span className="mx-2">/</span>
-          <Link href="/magaza" className="hover:text-zinc-800">Mağaza</Link>
+          <Link href="/magaza" className="hover:text-zinc-800">
+            Mağaza
+          </Link>
           <span className="mx-2">/</span>
           <span className="text-zinc-800">{product.title}</span>
         </nav>
@@ -39,25 +49,20 @@ export default async function ProductPage({
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Gallery */}
           <section className="rounded-3xl border border-zinc-200 bg-white p-4">
-            <Gallery
-  images={product.images.map((img) => ({
-    src: img.src,
-    alt: img.alt ?? product.title,
-  }))}
-/>
-
+            <Gallery images={galleryImages} />
           </section>
 
           {/* Info */}
           <section className="space-y-5">
             <div>
               <p className="text-xs font-semibold tracking-wide text-zinc-500">
-                {(product.category ?? "").replaceAll("-", " ").toUpperCase()}
+                {((product.category ?? "") || (product.kat ?? ""))
+                  .toString()
+                  .replaceAll("-", " ")
+                  .toUpperCase()}
               </p>
 
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
-                {product.title}
-              </h1>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">{product.title}</h1>
 
               {product.brand ? (
                 <p className="mt-2 text-sm text-zinc-600">
@@ -68,7 +73,7 @@ export default async function ProductPage({
 
             {/* Price */}
             <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
-              <div className="flex items-end gap-3">
+              <div className="flex flex-wrap items-end gap-3">
                 <p className="text-2xl font-extrabold text-zinc-900">{formatTRY(product.price)}</p>
 
                 {product.compareAtPrice && product.compareAtPrice > product.price ? (
@@ -123,6 +128,7 @@ export default async function ProductPage({
             {/* Description */}
             <div className="rounded-3xl border border-zinc-200 bg-white p-5">
               <h2 className="text-sm font-semibold text-zinc-900">Ürün açıklaması</h2>
+
               <p className="mt-2 text-sm leading-6 text-zinc-600">
                 {(product as any).shortDescription ??
                   (product as any).short ??
