@@ -1,19 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import rawProducts from "../../../data/products.json";
+import productsJson from "../../../data/products.json";
 
-type RawProduct = {
+type RawProd = {
   slug?: string;
   title?: string;
-  name?: string;
   brand?: string;
   price?: number;
-  compareAtPrice?: number | null;
+  compareAtPrice?: number;
   shortDescription?: string;
   description?: string;
+  usage?: string;
   benefits?: string[];
-  images?: Array<string | { src: string; alt?: string }>;
+  images?: Array<string | { src?: string; alt?: string }>;
 };
 
 type Product = {
@@ -21,15 +21,16 @@ type Product = {
   title: string;
   brand: string;
   price: number;
-  compareAtPrice?: number | null;
+  compareAtPrice: number | null;
   shortDescription: string;
+  usage: string;
   benefits: string[];
   images: { src: string; alt: string }[];
 };
 
-function normalizeSlug(s: string) {
+function normalizeSlug(input: unknown) {
+  const s = String(input ?? "").toLowerCase().trim();
   return s
-    .toLowerCase()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")
@@ -37,34 +38,36 @@ function normalizeSlug(s: string) {
     .replace(/ö/g, "o")
     .replace(/ç/g, "c")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/^-+|-+$/g, "");
 }
 
-function normalizeProduct(p: RawProduct): Product {
-  const title = p.title || p.name || "Ürün";
+function normalizeProduct(raw: RawProd): Product {
+  const title = String(raw.title ?? "Ürün Adı");
 
-  const images =
-    p.images?.map((img, i) => {
-      if (typeof img === "string") {
-        return {
-          src: img,
-          alt: `${title} ${i + 1}`,
-        };
-      }
-      return {
-        src: img.src,
-        alt: img.alt || `${title} ${i + 1}`,
-      };
-    }) ?? [];
+  const images: { src: string; alt: string }[] =
+    Array.isArray(raw.images) && raw.images.length > 0
+      ? raw.images.map((img, idx) => {
+          if (typeof img === "string") {
+            return { src: img, alt: `${title} ${idx + 1}` };
+          }
+          return {
+            src: String(img.src ?? ""),
+            alt: String(img.alt ?? title),
+          };
+        })
+      : [{ src: "/demo/urun-1.jpg", alt: title }];
 
   return {
-    slug: normalizeSlug(p.slug || title),
+    slug: normalizeSlug(raw.slug ?? title),
     title,
-    brand: p.brand || "",
-    price: Number(p.price || 0),
-    compareAtPrice: p.compareAtPrice ?? null,
-    shortDescription: p.shortDescription || "",
-    benefits: Array.isArray(p.benefits) ? p.benefits : [],
+    brand: String(raw.brand ?? ""),
+    price: Number(raw.price ?? 0),
+    compareAtPrice: raw.compareAtPrice ?? null,
+    shortDescription: String(raw.shortDescription ?? ""),
+    usage: String(raw.usage ?? ""),
+    benefits: Array.isArray(raw.benefits)
+      ? raw.benefits.map((b) => String(b))
+      : [],
     images,
   };
 }
@@ -74,15 +77,13 @@ export default function ProductPage({
 }: {
   params: { slug: string };
 }) {
+  const allProducts = (productsJson as RawProd[]).map(normalizeProduct);
   const slug = normalizeSlug(params.slug);
 
-  const products = (rawProducts as RawProduct[]).map(normalizeProduct);
+  const product = allProducts.find((p) => p.slug === slug);
+  if (!product) notFound();
 
-  const product = products.find((p) => p.slug === slug);
-
-  if (!product) {
-    notFound();
-  }
+  const { title, brand, price, compareAtPrice, shortDescription, usage, benefits, images } = product;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -94,12 +95,12 @@ export default function ProductPage({
       </Link>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {/* GÖRSELLER – İKON BOYUT */}
+        {/* Ürün Görselleri (ikon boyutu) */}
         <div className="flex flex-wrap gap-3">
-          {product.images.map((img, i) => (
+          {images.map((img, i) => (
             <div
               key={i}
-              className="relative h-16 w-16 overflow-hidden rounded-lg border bg-zinc-50"
+              className="relative h-20 w-20 overflow-hidden rounded-lg border bg-zinc-50"
             >
               <Image
                 src={img.src}
@@ -111,37 +112,35 @@ export default function ProductPage({
           ))}
         </div>
 
-        {/* ÜRÜN BİLGİSİ */}
+        {/* Ürün Bilgi */}
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-zinc-900">
-            {product.title}
-          </h1>
+          <h1 className="text-2xl font-bold text-zinc-900">{title}</h1>
 
-          {product.brand && (
-            <p className="text-sm text-zinc-500">{product.brand}</p>
-          )}
+          {brand && <p className="text-sm text-zinc-500">{brand}</p>}
 
           <div className="flex items-center gap-3">
-            <p className="text-xl font-bold text-zinc-900">
-              {product.price} ₺
-            </p>
-            {product.compareAtPrice && (
-              <p className="text-sm text-zinc-400 line-through">
-                {product.compareAtPrice} ₺
+            <p className="text-xl font-bold text-zinc-900">{price} ₺</p>
+            {compareAtPrice ? (
+              <p className="text-sm line-through text-zinc-400">
+                {compareAtPrice} ₺
               </p>
-            )}
+            ) : null}
           </div>
 
-          {product.shortDescription && (
+          {shortDescription && (
+            <p className="text-sm text-zinc-600">{shortDescription}</p>
+          )}
+
+          {usage && (
             <p className="text-sm text-zinc-600">
-              {product.shortDescription}
+              <strong>Kullanım:</strong> {usage}
             </p>
           )}
 
-          {product.benefits.length > 0 && (
+          {benefits.length > 0 && (
             <ul className="list-disc pl-5 text-sm text-zinc-600">
-              {product.benefits.map((b: string, i: number) => (
-                <li key={i}>{b}</li>
+              {benefits.map((b, idx) => (
+                <li key={idx}>{b}</li>
               ))}
             </ul>
           )}
@@ -153,7 +152,7 @@ export default function ProductPage({
 
             <Link
               href="/anket"
-              className="rounded-xl border px-5 py-3 text-sm font-semibold"
+              className="rounded-xl border px-5 py-3 text-sm font-semibold text-zinc-900"
             >
               Uzman Önerisi Al
             </Link>
