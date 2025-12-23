@@ -1,31 +1,26 @@
-import { notFound } from "next/navigation";
+export const dynamic = "force-dynamic";
+
 import Image from "next/image";
 import Link from "next/link";
-import productsData from "@/data/products.json";
+import { notFound } from "next/navigation";
+import products from "../../../data/products.json";
 
-type ProductImage = {
-  src: string;
-  alt?: string;
-};
+type Img = { src: string; alt: string };
 
 type Product = {
   slug: string;
-  title?: string;
-  name?: string;
+  title: string;
   brand?: string;
   price: number;
-  compareAtPrice?: number | null;
-  images?: ProductImage[] | string[];
+  compareAtPrice?: number;
   shortDescription?: string;
-  description?: string;
+  images: Img[];
   benefits?: string[];
   usage?: string;
-  ingredientsNote?: string;
-  tags?: string[];
 };
 
-function normalizeSlug(slug: string) {
-  return slug
+function normalizeSlug(s: string) {
+  return s
     .toLowerCase()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
@@ -35,58 +30,69 @@ function normalizeSlug(slug: string) {
     .replace(/ç/g, "c");
 }
 
-function getImages(p: Product): { src: string; alt: string }[] {
-  if (!p.images || p.images.length === 0) {
-    return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
-  }
+function getProduct(slug: string): Product | null {
+  const found = (products as any[]).find(
+    (p) => normalizeSlug(p.slug) === normalizeSlug(slug)
+  );
+  if (!found) return null;
 
-  return (p.images as any[]).map((img, i) => {
-    if (typeof img === "string") {
-      return { src: img, alt: p.title ?? "Ürün" };
-    }
-    return {
-      src: img.src,
-      alt: img.alt ?? p.title ?? `Ürün görseli ${i + 1}`,
-    };
-  });
+  return {
+    slug: found.slug,
+    title: found.title,
+    brand: found.brand,
+    price: found.price,
+    compareAtPrice: found.compareAtPrice,
+    shortDescription: found.shortDescription,
+    images: (found.images ?? []).map((i: any) => ({
+      src: typeof i === "string" ? i : i.src,
+      alt: i.alt ?? found.title,
+    })),
+    benefits: found.benefits ?? [],
+    usage: found.usage ?? "",
+  };
 }
 
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = await params;
-  const normalized = normalizeSlug(slug);
-
-  const product = (productsData as Product[]).find(
-    (p) => normalizeSlug(p.slug) === normalized
-  );
-
+  const product = getProduct(params.slug);
   if (!product) notFound();
 
-  const images = getImages(product);
+  const images = product.images.length
+    ? product.images
+    : [{ src: "/demo/urun-1.jpg", alt: product.title }];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-10">
+      <Link
+        href="/magaza"
+        className="mb-6 inline-block text-sm text-zinc-600 hover:underline"
+      >
+        ← Mağazaya dön
+      </Link>
+
       <div className="grid gap-8 md:grid-cols-2">
-        {/* SOL: GALERİ */}
-        <div className="relative">
-          <div className="relative aspect-square w-full max-w-md mx-auto rounded-3xl bg-zinc-50 ring-1 ring-zinc-200">
+        {/* === GALERİ – İKON BOYUTU === */}
+        <div className="flex flex-col items-center gap-3">
+          {/* ANA GÖRSEL */}
+          <div className="relative h-48 w-48 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
             <Image
               src={images[0].src}
               alt={images[0].alt}
               fill
-              className="object-contain p-6"
+              className="object-contain p-4"
               priority
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-4 gap-2 max-w-md mx-auto">
+          {/* ALT İKONLAR */}
+          <div className="flex gap-2">
             {images.slice(1).map((img, i) => (
               <div
                 key={i}
-                className="relative aspect-square rounded-xl bg-zinc-50 ring-1 ring-zinc-200"
+                className="relative h-16 w-16 rounded-xl bg-zinc-50 ring-1 ring-zinc-200"
               >
                 <Image
                   src={img.src}
@@ -99,14 +105,14 @@ export default async function ProductPage({
           </div>
         </div>
 
-        {/* SAĞ: BİLGİ */}
-        <div className="space-y-5">
+        {/* === ÜRÜN BİLGİ === */}
+        <div className="space-y-4">
           <div>
-            <p className="text-sm font-semibold text-zinc-500">
+            <p className="text-xs font-semibold uppercase text-zinc-500">
               {product.brand}
             </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
-              {product.title ?? product.name}
+            <h1 className="mt-2 text-2xl font-bold text-zinc-900">
+              {product.title}
             </h1>
           </div>
 
@@ -115,41 +121,43 @@ export default async function ProductPage({
               ₺{product.price}
             </span>
             {product.compareAtPrice && (
-              <span className="text-sm text-zinc-400 line-through">
+              <span className="text-sm text-zinc-500 line-through">
                 ₺{product.compareAtPrice}
               </span>
             )}
           </div>
 
           {product.shortDescription && (
-            <p className="text-zinc-600 leading-6">
+            <p className="text-sm text-zinc-600">
               {product.shortDescription}
             </p>
           )}
 
-          <div className="grid gap-3">
-            <Link
-              href="/anket"
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95"
-            >
-              Uzman önerisi al
-            </Link>
-
-            <Link
-              href="/magaza"
-              className="inline-flex w-full items-center justify-center rounded-2xl border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-900"
-            >
-              Mağazaya dön
-            </Link>
-          </div>
-
-          {product.benefits && (
-            <ul className="list-disc pl-5 text-sm text-zinc-600 space-y-1">
+          {product.benefits && product.benefits.length > 0 && (
+            <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-600">
               {product.benefits.map((b, i) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
           )}
+
+          {product.usage && (
+            <p className="text-sm text-zinc-600">
+              <strong>Kullanım:</strong> {product.usage}
+            </p>
+          )}
+
+          <div className="grid gap-2 pt-4">
+            <button className="w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white">
+              Sepete Ekle
+            </button>
+            <Link
+              href="/anket"
+              className="w-full rounded-2xl border border-zinc-300 px-4 py-3 text-center text-sm font-semibold text-zinc-900"
+            >
+              Uzman önerisi al
+            </Link>
+          </div>
         </div>
       </div>
     </main>
