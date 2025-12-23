@@ -1,9 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import products from "../../../data/products.json";
+import products from "@/data/products.json";
 
-type ProductImage = { src: string; alt?: string };
+type Img = {
+  src: string;
+  alt: string;
+};
+
 type Product = {
   slug: string;
   title: string;
@@ -11,78 +15,98 @@ type Product = {
   price: number;
   compareAtPrice?: number;
   shortDescription?: string;
-  images?: ProductImage[];
+  benefits?: string[];
+  usage?: string;
+  images: Img[];
 };
+
+function normalizeSlug(s: string) {
+  return s.toLowerCase().trim();
+}
 
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = await params;
+  const slug = normalizeSlug(params.slug);
 
-  const product = (products as Product[]).find((p) => p.slug === slug);
+  const product = (products as any[]).find(
+    (p) => normalizeSlug(p.slug) === slug
+  ) as Product | undefined;
+
   if (!product) notFound();
 
-  const images =
-    product.images && product.images.length > 0
-      ? product.images.map((img, i) => ({
-          src: img.src,
-          alt: img.alt ?? `${product.title} ${i + 1}`,
-        }))
-      : [{ src: "/demo/urun-1.jpg", alt: product.title }];
+  const images: Img[] =
+    product.images?.map((img) => ({
+      src: img.src,
+      alt: img.alt || product.title,
+    })) ?? [];
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <Link href="/magaza" className="mb-6 inline-block text-sm text-zinc-600 hover:underline">
-        ← Mağazaya dön
-      </Link>
-
       <div className="grid gap-8 md:grid-cols-2">
-        {/* ICON SIZE IMAGE STRIP (görünür garantili) */}
-        <div className="flex flex-wrap gap-3">
+        {/* 🔹 ICON BOYUTUNDA GÖRSELLER */}
+        <div className="flex gap-3">
           {images.map((img, i) => (
             <div
               key={i}
-              className="relative h-24 w-24 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
+              className="relative h-24 w-24 overflow-hidden rounded-xl border bg-white"
             >
               <Image
                 src={img.src}
                 alt={img.alt}
                 fill
-                className="object-cover"
-                sizes="96px"
-                priority={i === 0}
+                className="object-contain p-2"
               />
             </div>
           ))}
         </div>
 
-        {/* INFO */}
+        {/* 🔹 ÜRÜN BİLGİLERİ */}
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-zinc-900">{product.title}</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">
+            {product.title}
+          </h1>
 
-          {product.brand ? <p className="text-sm text-zinc-500">{product.brand}</p> : null}
+          {product.brand && (
+            <p className="text-sm text-zinc-500">{product.brand}</p>
+          )}
 
           <div className="flex items-center gap-3">
-            <p className="text-xl font-bold text-zinc-900">{product.price} ₺</p>
-            {product.compareAtPrice ? (
-              <p className="text-sm line-through text-zinc-400">{product.compareAtPrice} ₺</p>
-            ) : null}
+            <span className="text-2xl font-semibold">
+              ₺{product.price}
+            </span>
+
+            {product.compareAtPrice && product.compareAtPrice > 0 && (
+              <span className="text-sm line-through text-zinc-400">
+                ₺{product.compareAtPrice}
+              </span>
+            )}
           </div>
 
-          {product.shortDescription ? (
-            <p className="text-sm leading-6 text-zinc-600">{product.shortDescription}</p>
-          ) : null}
+          {product.shortDescription && (
+            <p className="text-zinc-600">
+              {product.shortDescription}
+            </p>
+          )}
+
+          {product.benefits && product.benefits.length > 0 && (
+            <ul className="list-disc pl-5 text-sm text-zinc-600">
+              {product.benefits.map((b: string, i: number) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          )}
 
           <div className="flex gap-3 pt-4">
-            <button className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95">
+            <button className="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white">
               Sepete Ekle
             </button>
 
             <Link
               href="/anket"
-              className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-900 hover:border-zinc-300"
+              className="rounded-xl border px-6 py-3 text-sm font-semibold"
             >
               Uzman Önerisi Al
             </Link>
