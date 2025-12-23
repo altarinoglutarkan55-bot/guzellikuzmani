@@ -1,111 +1,135 @@
-import Link from "next/link";
-import QuickViewGridClient from "./_components/QuickViewGridClient";
+import MagazaClient from "./_components/MagazaClient";
+import productsData from "../../data/products.json";
 
 type SP = Record<string, string | string[] | undefined>;
 
 type Product = {
   slug: string;
-  title: string;
+  title?: string;
+  name?: string;
+  brand?: string;
   price: number;
-  category: string;
-  tags: string[];
-  img: string;
-  badge?: string;
+  compareAtPrice?: number | null;
+  images?: Array<{ src: string; alt?: string }> | string[];
+  category?: string;
+  kat?: string;
+  tags?: string[];
 };
 
-const PRODUCTS: Product[] = [
-  { slug: "mor-parlaklik-sampuan", title: "Mor Parlaklık Şampuanı 500ml", price: 349.9, category: "sampuan", tags: ["boyali", "yipranma"], img: "/demo/urun-1.jpg", badge: "Çok Satan" },
-  { slug: "renk-koruyucu-krem", title: "Renk Koruyucu Bakım Kremi", price: 279.9, category: "sac", tags: ["boyali", "kuru"], img: "/demo/urun-2.jpg", badge: "Yeni" },
-  { slug: "keratin-maske", title: "Keratin Onarıcı Maske", price: 399.9, category: "maske", tags: ["yipranma", "kuru"], img: "/demo/urun-3.jpg", badge: "Popüler" },
-  { slug: "isirgan-tonik", title: "Saç Derisi Tonik – Isırgan", price: 229.9, category: "tonik", tags: ["dokulme", "yagli"], img: "/demo/urun-4.jpg" },
-  { slug: "isi-koruyucu-sprey", title: "Isı Koruyucu Sprey", price: 259.9, category: "isi-koruyucu", tags: ["yipranma"], img: "/demo/urun-3.jpg" },
-  { slug: "arindirici-sampuan", title: "Arındırıcı Şampuan", price: 319.9, category: "sampuan", tags: ["yagli", "kepek"], img: "/demo/urun-4.jpg" },
-  { slug: "nem-serumu", title: "Nem Serum – İpeksi Dokunuş", price: 289.9, category: "serum", tags: ["kuru"], img: "/demo/urun-2.jpg" },
-  { slug: "sekillendirici-krem", title: "Şekillendirici Krem", price: 219.9, category: "sekillendirici", tags: ["kuru"], img: "/demo/urun-1.jpg" },
-];
-
-function getFirst(v?: string | string[]) {
-  return Array.isArray(v) ? v[0] : v;
+function toStr(v: string | string[] | undefined) {
+  return Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
 }
 
-export default async function MagazaPage({ searchParams }: { searchParams: Promise<SP> }) {
+function normalize(s: string) {
+  return s.toLowerCase().trim();
+}
+
+function getTitle(p: Product) {
+  return p.title ?? p.name ?? "Ürün";
+}
+
+function getCategoryKey(p: Product) {
+  return normalize(p.category ?? p.kat ?? "");
+}
+
+function getTagsText(p: Product) {
+  return normalize((p.tags ?? []).join(" "));
+}
+
+function getBrand(p: Product) {
+  return p.brand ?? "";
+}
+
+function imgSrc(p: Product) {
+  const imgs = p.images ?? [];
+  if (Array.isArray(imgs)) {
+    const first = imgs[0] as any;
+    if (!first) return "/demo/urun-1.jpg";
+    if (typeof first === "string") return first;
+    return first.src ?? "/demo/urun-1.jpg";
+  }
+  return "/demo/urun-1.jpg";
+}
+
+function enrichProducts(raw: any[]): Product[] {
+  return (raw ?? []).map((p) => ({
+    slug: String(p.slug ?? ""),
+    title: p.title ?? p.name,
+    name: p.name,
+    brand: p.brand,
+    price: Number(p.price ?? 0),
+    compareAtPrice: p.compareAtPrice ?? p.compare_at_price ?? null,
+    images: p.images,
+    category: p.category,
+    kat: p.kat,
+    tags: Array.isArray(p.tags) ? p.tags : [],
+  }));
+}
+
+function sortProducts(list: Product[], sort: string) {
+  const s = sort || "pop";
+  const copy = [...list];
+
+  if (s === "price-asc") copy.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  if (s === "price-desc") copy.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+
+  // "new" gibi bir alan yoksa pop/default aynı kalsın
+  return copy;
+}
+
+export default async function MagazaPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
   const sp = await searchParams;
 
-  const kat = getFirst(sp.kat) ?? "";
-  const concerns = sp.c ? (Array.isArray(sp.c) ? sp.c : [sp.c]) : [];
+  const q = toStr(sp.q);
+  const kat = toStr(sp.kat);
+  const sort = toStr(sp.sort) || "pop";
+  const min = Number(toStr(sp.min) || "0") || 0;
+  const max = Number(toStr(sp.max) || "0") || 0;
 
-  const isFromSurvey = Boolean(kat || concerns.length);
+  const all = enrichProducts(productsData as any[]).filter((p) => p.slug);
 
-  let items = PRODUCTS.filter((p) => {
-    const katOk = kat ? p.category === kat || kat === "sac" : true;
-    const cOk = concerns.length ? concerns.every((c) => p.tags.includes(String(c))) : true;
-    return katOk && cOk;
-  });
+  const qn = normalize(q);
+  const katn = normalize(kat);
+
+  let filtered = all;
+
+  if (qn) {
+    filtered = filtered.filter((p) => {
+      const hay = normalize(`${getTitle(p)} ${getBrand(p)} ${getTagsText(p)}`);
+      return hay.includes(qn);
+    });
+  }
+
+  if (katn) {
+    filtered = filtered.filter((p) => getCategoryKey(p) === katn);
+  }
+
+  if (min > 0) filtered = filtered.filter((p) => (p.price ?? 0) >= min);
+  if (max > 0) filtered = filtered.filter((p) => (p.price ?? 0) <= max);
+
+  filtered = sortProducts(filtered, sort);
 
   return (
-    <div className="bg-white">
-      <section className="mx-auto max-w-screen-xl px-4 pt-10">
-
-        {/* ✅ ANKETTEN GELEN ÖNERİ BANDI */}
-        {isFromSurvey ? (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#7C3AED] px-3 py-1 text-xs font-semibold text-white">
-                Öneriler aktif
-              </span>
-              <p className="text-sm text-zinc-700">
-                Anket cevaplarına göre filtrelenmiş ürünleri görüyorsun.
-              </p>
-            </div>
-
-            <Link
-              href="/magaza"
-              className="text-sm font-semibold text-[#7C3AED] hover:underline"
-            >
-              Filtreleri temizle
-            </Link>
-          </div>
-        ) : null}
-
-        {/* BAŞLIK */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            {isFromSurvey ? "Sana Özel Öneriler" : "Mağaza"}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600">
-            {items.length} ürün listeleniyor
-          </p>
-        </div>
-
-        {/* GRID */}
-        {items.length === 0 ? (
-          <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-8">
-            <p className="text-sm font-semibold text-zinc-900">Sonuç bulunamadı</p>
-            <p className="mt-2 text-sm text-zinc-600">
-              Filtreleri temizleyip tekrar deneyebilirsin.
-            </p>
-            <Link
-              href="/magaza"
-              className="mt-4 inline-flex rounded-xl bg-[#7C3AED] px-5 py-3 text-sm font-semibold text-white hover:opacity-95"
-            >
-              Tüm ürünleri gör
-            </Link>
-          </div>
-        ) : (
-          <QuickViewGridClient
-            items={items.map(({ slug, title, price, category, img, badge }) => ({
-              slug,
-              title,
-              price,
-              category,
-              img,
-              badge,
-            }))}
-          />
-        )}
-      </section>
-
-      <div className="h-12" />
-    </div>
+    <MagazaClient
+      products={filtered.map((p) => ({
+        ...p,
+        title: getTitle(p),
+        brand: getBrand(p),
+        image: imgSrc(p),
+        category: getCategoryKey(p),
+      }))}
+      initial={{
+        q,
+        kat,
+        sort,
+        min: min ? String(min) : "",
+        max: max ? String(max) : "",
+        totalAll: all.length,
+      }}
+    />
   );
 }
