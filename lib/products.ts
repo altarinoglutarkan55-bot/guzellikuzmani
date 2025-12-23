@@ -18,18 +18,23 @@ export type Product = {
   productSlug?: string;
 };
 
-function normalize(s: any) {
+function normalizeText(s: any) {
   return (s ?? "").toString().toLowerCase().trim();
 }
 
-function slugify(input: string) {
-  const s = normalize(input)
+/** URL/slug için TR -> ASCII normalize */
+function normalizeSlug(input: any) {
+  return normalizeText(decodeURIComponent((input ?? "").toString()))
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")
     .replace(/ı/g, "i")
     .replace(/ö/g, "o")
-    .replace(/ç/g, "c")
+    .replace(/ç/g, "c");
+}
+
+function slugify(input: string) {
+  const s = normalizeSlug(input)
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
@@ -59,9 +64,13 @@ function normalizeImages(p: Product): ProductImage[] {
 function enrichProducts(raw: any[]): Product[] {
   return (raw ?? []).map((p) => {
     const title = (p.title ?? p.name ?? "").toString();
-    const slug =
+
+    const slugRaw =
       (p.slug ?? p.productSlug ?? p.handle ?? p.id ?? "").toString().trim() ||
-      slugify(title);
+      title;
+
+    // ✅ En kritik nokta: slug her zaman standart (ASCII) olsun
+    const slug = slugify(slugRaw);
 
     return {
       slug,
@@ -89,13 +98,16 @@ export function getAllProducts(): Product[] {
   return _cache;
 }
 
-export function getProduct(slug: string): (Product & { images: ProductImage[]; title: string }) | null {
-  const s = normalize(decodeURIComponent(slug || ""));
+export function getProduct(
+  slug: string
+): (Product & { images: ProductImage[]; title: string }) | null {
+  const s = slugify(slug); // ✅ gelen slug’ı da standartlaştır
+
   const all = getAllProducts();
 
   const found =
-    all.find((p) => normalize(p.slug) === s) ||
-    // ekstra güvenlik: bazı eski verilerde slug boş olabilir
+    all.find((p) => p.slug === s) ||
+    // ekstra güvenlik: title’dan üretilen slug ile de dene
     all.find((p) => slugify(getTitle(p)) === s);
 
   if (!found) return null;
