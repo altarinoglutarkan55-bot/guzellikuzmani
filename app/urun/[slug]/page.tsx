@@ -7,8 +7,8 @@ import products from "../../../data/products.json";
 
 type Img = { src: string; alt: string };
 
-function normalizeSlug(s: string) {
-  return s
+function normalizeSlug(v: unknown) {
+  return String(v ?? "")
     .toLowerCase()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
@@ -19,14 +19,22 @@ function normalizeSlug(s: string) {
     .trim();
 }
 
-function safeImages(p: any): Img[] {
-  if (!Array.isArray(p.images) || p.images.length === 0) {
-    return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
+function normalizeImages(p: any): Img[] {
+  if (!Array.isArray(p?.images) || p.images.length === 0) {
+    return [{ src: "/demo/urun-1.jpg", alt: "Ürün" }];
   }
 
   return p.images.map((img: any) => ({
-    src: typeof img === "string" ? img : img?.src ?? "/demo/urun-1.jpg",
-    alt: img?.alt ?? p.title ?? "Ürün",
+    src:
+      typeof img === "string"
+        ? img
+        : typeof img?.src === "string"
+        ? img.src
+        : "/demo/urun-1.jpg",
+    alt:
+      typeof img?.alt === "string"
+        ? img.alt
+        : String(p?.title ?? "Ürün"),
   }));
 }
 
@@ -35,13 +43,32 @@ export default function ProductPage({
 }: {
   params: { slug: string };
 }) {
-  const product = (products as any[]).find(
-    (p) => normalizeSlug(p.slug) === normalizeSlug(params.slug)
+  const slug = normalizeSlug(params.slug);
+
+  const raw = (products as any[]).find(
+    (p) => normalizeSlug(p?.slug) === slug
   );
 
-  if (!product) notFound();
+  if (!raw) notFound();
 
-  const images = safeImages(product);
+  const title = String(raw?.title ?? "Ürün");
+  const brand = String(raw?.brand ?? "Güzellik Uzmanı");
+  const price = Number(raw?.price ?? 0);
+  const compareAt = raw?.compareAtPrice
+    ? Number(raw.compareAtPrice)
+    : null;
+
+  const shortDesc = raw?.shortDescription
+    ? String(raw.shortDescription)
+    : "";
+
+  const benefits = Array.isArray(raw?.benefits)
+    ? raw.benefits.map((b: any) => String(b))
+    : [];
+
+  const usage = raw?.usage ? String(raw.usage) : "";
+
+  const images = normalizeImages(raw);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -85,41 +112,37 @@ export default function ProductPage({
         {/* === ÜRÜN BİLGİ === */}
         <div className="space-y-4">
           <p className="text-xs font-semibold uppercase text-zinc-500">
-            {product.brand ?? "Güzellik Uzmanı"}
+            {brand}
           </p>
 
-          <h1 className="text-2xl font-bold text-zinc-900">
-            {product.title ?? "Ürün"}
-          </h1>
+          <h1 className="text-2xl font-bold text-zinc-900">{title}</h1>
 
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-zinc-900">
-              ₺{product.price}
+              ₺{price}
             </span>
-            {product.compareAtPrice && (
+            {compareAt && (
               <span className="text-sm text-zinc-500 line-through">
-                ₺{product.compareAtPrice}
+                ₺{compareAt}
               </span>
             )}
           </div>
 
-          {product.shortDescription && (
-            <p className="text-sm text-zinc-600">
-              {product.shortDescription}
-            </p>
+          {shortDesc && (
+            <p className="text-sm text-zinc-600">{shortDesc}</p>
           )}
 
-          {Array.isArray(product.benefits) && product.benefits.length > 0 && (
+          {benefits.length > 0 && (
             <ul className="list-disc pl-5 text-sm text-zinc-600">
-              {product.benefits.map((b: string, i: number) => (
+              {benefits.map((b, i) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
           )}
 
-          {product.usage && (
+          {usage && (
             <p className="text-sm text-zinc-600">
-              <strong>Kullanım:</strong> {product.usage}
+              <strong>Kullanım:</strong> {usage}
             </p>
           )}
 
@@ -127,6 +150,7 @@ export default function ProductPage({
             <button className="w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white">
               Sepete Ekle
             </button>
+
             <Link
               href="/anket"
               className="w-full rounded-2xl border border-zinc-300 px-4 py-3 text-center text-sm font-semibold text-zinc-900"
