@@ -14,6 +14,9 @@ type Product = {
   category?: string;
   kat?: string;
   tags?: string[];
+  id?: string | number;
+  handle?: string;
+  productSlug?: string;
 };
 
 function toStr(v: string | string[] | undefined) {
@@ -21,7 +24,22 @@ function toStr(v: string | string[] | undefined) {
 }
 
 function normalize(s: string) {
-  return s.toLowerCase().trim();
+  return (s ?? "").toString().toLowerCase().trim();
+}
+
+function slugify(input: string) {
+  const s = normalize(input)
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return s || "urun";
 }
 
 function getTitle(p: Product) {
@@ -52,18 +70,28 @@ function imgSrc(p: Product) {
 }
 
 function enrichProducts(raw: any[]): Product[] {
-  return (raw ?? []).map((p) => ({
-    slug: String(p.slug ?? ""),
-    title: p.title ?? p.name,
-    name: p.name,
-    brand: p.brand,
-    price: Number(p.price ?? 0),
-    compareAtPrice: p.compareAtPrice ?? p.compare_at_price ?? null,
-    images: p.images,
-    category: p.category,
-    kat: p.kat,
-    tags: Array.isArray(p.tags) ? p.tags : [],
-  }));
+  return (raw ?? []).map((p) => {
+    const title = (p.title ?? p.name ?? "").toString();
+    const slug =
+      (p.slug ?? p.productSlug ?? p.handle ?? p.id ?? "").toString().trim() ||
+      slugify(title);
+
+    return {
+      slug,
+      title: p.title ?? p.name,
+      name: p.name,
+      brand: p.brand,
+      price: Number(p.price ?? 0),
+      compareAtPrice: p.compareAtPrice ?? p.compare_at_price ?? null,
+      images: p.images,
+      category: p.category,
+      kat: p.kat,
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      id: p.id,
+      handle: p.handle,
+      productSlug: p.productSlug,
+    };
+  });
 }
 
 function sortProducts(list: Product[], sort: string) {
@@ -73,7 +101,6 @@ function sortProducts(list: Product[], sort: string) {
   if (s === "price-asc") copy.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
   if (s === "price-desc") copy.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
 
-  // "new" gibi bir alan yoksa pop/default aynı kalsın
   return copy;
 }
 
@@ -90,7 +117,7 @@ export default async function MagazaPage({
   const min = Number(toStr(sp.min) || "0") || 0;
   const max = Number(toStr(sp.max) || "0") || 0;
 
-  const all = enrichProducts(productsData as any[]).filter((p) => p.slug);
+  const all = enrichProducts(productsData as any[]); // ARTIK slug üretildiği için eleme yok
 
   const qn = normalize(q);
   const katn = normalize(kat);
