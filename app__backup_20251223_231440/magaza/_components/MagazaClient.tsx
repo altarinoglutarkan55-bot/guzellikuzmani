@@ -1,6 +1,5 @@
-﻿"use client";
+"use client";
 
-import AddToCartMini from "./AddToCartMini";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -60,7 +59,7 @@ export default function MagazaClient({
 
   return (
     <>
-      {/* ÜST BAR */}
+      {/* ÜST BAR (istersen burayı sonra daha da sadeleştiririz) */}
       <div className="mb-6 flex items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Mağaza</h1>
@@ -81,9 +80,7 @@ export default function MagazaClient({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => {
           const hasCompare = typeof p.compareAtPrice === "number" && p.compareAtPrice > p.price;
-          const pct = hasCompare
-            ? Math.round(((p.compareAtPrice! - p.price) / p.compareAtPrice!) * 100)
-            : 0;
+          const pct = hasCompare ? Math.round(((p.compareAtPrice! - p.price) / p.compareAtPrice!) * 100) : 0;
 
           return (
             <div
@@ -91,7 +88,7 @@ export default function MagazaClient({
               className="relative rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md"
             >
               <div className="flex items-start gap-4">
-                {/* Görsel (96x96) */}
+                {/* ✅ GÖRSEL: XIAOMI gibi küçük (96x96) */}
                 <div className="flex h-24 w-24 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
                   <Image
                     src={p.image}
@@ -125,7 +122,6 @@ export default function MagazaClient({
                     ) : null}
                   </div>
 
-                  {/* Aksiyonlar */}
                   <div className="mt-3 flex gap-2">
                     <Link
                       href={`/urun/${p.slug}`}
@@ -133,7 +129,6 @@ export default function MagazaClient({
                     >
                       İncele
                     </Link>
-
                     <button
                       type="button"
                       onClick={() => openModal(p.slug)}
@@ -144,8 +139,6 @@ export default function MagazaClient({
                     >
                       Quick View
                     </button>
-
-                    <AddToCartMini id={p.slug} title={p.title} price={p.price} image={p.image} />
                   </div>
                 </div>
               </div>
@@ -177,6 +170,7 @@ export default function MagazaClient({
             </div>
 
             <div className="grid gap-6 p-6 md:grid-cols-2">
+              {/* ✅ Modal görseli de küçük ve temiz */}
               <div className="flex items-center justify-center rounded-3xl bg-zinc-50 ring-1 ring-zinc-200 py-10">
                 <Image
                   src={active.image}
@@ -193,20 +187,11 @@ export default function MagazaClient({
                   <p className="text-xs font-semibold tracking-wide text-zinc-500">
                     {active.category.replaceAll("-", " ").toUpperCase()}
                   </p>
-                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">
-                    {active.title}
-                  </h3>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">{active.title}</h3>
                   <p className="mt-2 text-lg font-bold text-zinc-900">{formatTRY(active.price)}</p>
                 </div>
 
                 <div className="grid gap-2">
-                  <AddToCartMini
-                    id={active.slug}
-                    title={active.title}
-                    price={active.price}
-                    image={active.image}
-                  />
-
                   <Link
                     href={`/urun/${active.slug}`}
                     onClick={() => (document.body.style.overflow = "")}

@@ -1,6 +1,7 @@
-﻿// app/magaza/page.tsx
+// app/magaza/page.tsx
 import MagazaClient from "./_components/MagazaClient";
 import { getAllProducts } from "../../lib/products";
+
 type Product = {
   slug: string;
   title: string;
@@ -51,7 +52,7 @@ export default async function MagazaPage({
   const mapped: Product[] = all
     .map((p: any) => ({
       slug: String(p?.slug ?? ""),
-      title: String(p?.title ?? p?.name ?? "ÃœrÃ¼n"),
+      title: String(p?.title ?? p?.name ?? "Ürün"),
       brand: p?.brand ? String(p.brand) : undefined,
       price: Number(p?.price ?? 0),
       compareAtPrice:
@@ -105,4 +106,3 @@ export default async function MagazaPage({
     </main>
   );
 }
-
