@@ -54,15 +54,15 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
             className="group relative rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm transition hover:shadow-md"
           >
             <Link href={`/urun/${p.slug}`} className="block">
-              <div className="relative overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
-                {/* GÖRSEL %50 KÜÇÜLTÜLDÜ */}
-                <div className="relative mx-auto aspect-square w-1/2">
+              <div className="relative rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 py-4">
+                {/* 🔽 GÖRSEL DAHA DA KÜÇÜLDÜ */}
+                <div className="relative mx-auto aspect-square w-1/3">
                   <Image
                     src={p.img}
                     alt={p.title}
                     fill
-                    className="object-cover"
-                    sizes="(min-width: 1024px) 140px, 50vw"
+                    className="object-contain"
+                    sizes="120px"
                   />
                 </div>
 
@@ -84,7 +84,6 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
               </p>
             </Link>
 
-            {/* QUICK VIEW */}
             <button
               type="button"
               onClick={() => openModal(p.slug)}
@@ -123,15 +122,15 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
             </div>
 
             <div className="grid gap-6 p-5 md:grid-cols-2">
-              <div className="relative overflow-hidden rounded-3xl bg-zinc-50 ring-1 ring-zinc-200">
-                {/* MODAL GÖRSELİ DE %50 */}
-                <div className="relative mx-auto aspect-square w-1/2">
+              <div className="relative rounded-3xl bg-zinc-50 ring-1 ring-zinc-200 py-6">
+                {/* 🔽 MODAL GÖRSELİ DE KÜÇÜLDÜ */}
+                <div className="relative mx-auto aspect-square w-1/3">
                   <Image
                     src={active.img}
                     alt={active.title}
                     fill
-                    className="object-cover"
-                    sizes="(min-width: 768px) 210px, 100vw"
+                    className="object-contain"
+                    sizes="220px"
                     priority
                   />
                 </div>
@@ -170,31 +169,10 @@ export default function QuickViewGridClient({ items }: { items: Item[] }) {
 
                 <p className="text-sm leading-6 text-zinc-600">
                   Mini açıklama: Bu ürün kategorisine göre hızlı çözüm sunar.
-                  Detaylar ürün sayfasında.
                 </p>
-
-                <div className="grid grid-cols-3 gap-2 text-center text-xs text-zinc-600">
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                    Güvenli ödeme
-                  </div>
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                    Kolay iade
-                  </div>
-                  <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                    Hızlı destek
-                  </div>
-                </div>
               </div>
             </div>
           </div>
-
-          <button
-            className="sr-only"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Escape") closeModal();
-            }}
-          />
         </div>
       ) : null}
     </>
