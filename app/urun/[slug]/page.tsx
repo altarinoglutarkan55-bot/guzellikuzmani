@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import products from "../../../data/products.json";
 
-/* ------------------ TYPES ------------------ */
+/* ---------------- TYPES ---------------- */
 type ProductImage = {
   src: string;
   alt?: string;
@@ -19,47 +19,29 @@ type Product = {
   images?: ProductImage[];
 };
 
-/* ------------------ UTILS ------------------ */
-function normalizeSlug(str: string) {
-  return str
-    .toLowerCase()
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function getImages(p: Product): { src: string; alt: string }[] {
-  if (p.images && p.images.length > 0) {
-    return p.images.map((img, i) => ({
-      src: img.src,
-      alt: img.alt ?? `${p.title} ${i + 1}`,
-    }));
-  }
-  return [{ src: "/demo/urun-1.jpg", alt: p.title }];
-}
-
-/* ------------------ PAGE ------------------ */
-export default function ProductPage({
+/* ---------------- PAGE ---------------- */
+export default async function ProductPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const slug = normalizeSlug(params.slug);
+  const { slug } = await params;
 
   const product = (products as Product[]).find(
-    (p) => normalizeSlug(p.slug) === slug
+    (p) => p.slug === slug
   );
 
   if (!product) {
     notFound();
   }
 
-  const images = getImages(product);
+  const images =
+    product.images && product.images.length > 0
+      ? product.images.map((img, i) => ({
+          src: img.src,
+          alt: img.alt ?? `${product.title} ${i + 1}`,
+        }))
+      : [{ src: "/demo/urun-1.jpg", alt: product.title }];
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
