@@ -7,18 +7,6 @@ import products from "../../../data/products.json";
 
 type Img = { src: string; alt: string };
 
-type Product = {
-  slug: string;
-  title: string;
-  brand?: string;
-  price: number;
-  compareAtPrice?: number;
-  shortDescription?: string;
-  images: Img[];
-  benefits?: string[];
-  usage?: string;
-};
-
 function normalizeSlug(s: string) {
   return s
     .toLowerCase()
@@ -27,42 +15,33 @@ function normalizeSlug(s: string) {
     .replace(/ş/g, "s")
     .replace(/ı/g, "i")
     .replace(/ö/g, "o")
-    .replace(/ç/g, "c");
+    .replace(/ç/g, "c")
+    .trim();
 }
 
-function getProduct(slug: string): Product | null {
-  const found = (products as any[]).find(
-    (p) => normalizeSlug(p.slug) === normalizeSlug(slug)
-  );
-  if (!found) return null;
+function safeImages(p: any): Img[] {
+  if (!Array.isArray(p.images) || p.images.length === 0) {
+    return [{ src: "/demo/urun-1.jpg", alt: p.title ?? "Ürün" }];
+  }
 
-  return {
-    slug: found.slug,
-    title: found.title,
-    brand: found.brand,
-    price: found.price,
-    compareAtPrice: found.compareAtPrice,
-    shortDescription: found.shortDescription,
-    images: (found.images ?? []).map((i: any) => ({
-      src: typeof i === "string" ? i : i.src,
-      alt: i.alt ?? found.title,
-    })),
-    benefits: found.benefits ?? [],
-    usage: found.usage ?? "",
-  };
+  return p.images.map((img: any) => ({
+    src: typeof img === "string" ? img : img?.src ?? "/demo/urun-1.jpg",
+    alt: img?.alt ?? p.title ?? "Ürün",
+  }));
 }
 
-export default async function ProductPage({
+export default function ProductPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const product = getProduct(params.slug);
+  const product = (products as any[]).find(
+    (p) => normalizeSlug(p.slug) === normalizeSlug(params.slug)
+  );
+
   if (!product) notFound();
 
-  const images = product.images.length
-    ? product.images
-    : [{ src: "/demo/urun-1.jpg", alt: product.title }];
+  const images = safeImages(product);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -73,10 +52,9 @@ export default async function ProductPage({
         ← Mağazaya dön
       </Link>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* === GALERİ – İKON BOYUTU === */}
+      <div className="grid gap-10 md:grid-cols-2">
+        {/* === GALERİ (İKON BOYUTU) === */}
         <div className="flex flex-col items-center gap-3">
-          {/* ANA GÖRSEL */}
           <div className="relative h-48 w-48 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
             <Image
               src={images[0].src}
@@ -87,7 +65,6 @@ export default async function ProductPage({
             />
           </div>
 
-          {/* ALT İKONLAR */}
           <div className="flex gap-2">
             {images.slice(1).map((img, i) => (
               <div
@@ -107,14 +84,13 @@ export default async function ProductPage({
 
         {/* === ÜRÜN BİLGİ === */}
         <div className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase text-zinc-500">
-              {product.brand}
-            </p>
-            <h1 className="mt-2 text-2xl font-bold text-zinc-900">
-              {product.title}
-            </h1>
-          </div>
+          <p className="text-xs font-semibold uppercase text-zinc-500">
+            {product.brand ?? "Güzellik Uzmanı"}
+          </p>
+
+          <h1 className="text-2xl font-bold text-zinc-900">
+            {product.title ?? "Ürün"}
+          </h1>
 
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-zinc-900">
@@ -133,9 +109,9 @@ export default async function ProductPage({
             </p>
           )}
 
-          {product.benefits && product.benefits.length > 0 && (
-            <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-600">
-              {product.benefits.map((b, i) => (
+          {Array.isArray(product.benefits) && product.benefits.length > 0 && (
+            <ul className="list-disc pl-5 text-sm text-zinc-600">
+              {product.benefits.map((b: string, i: number) => (
                 <li key={i}>{b}</li>
               ))}
             </ul>
