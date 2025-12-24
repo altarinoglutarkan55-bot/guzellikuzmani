@@ -1,5 +1,4 @@
-﻿// app/urun/[slug]/page.tsx
-import Link from "next/link";
+﻿import Link from "next/link";
 import products from "@/data/products.json";
 import Gallery from "./_components/Gallery";
 import ProductTabs from "./ProductTabs";
@@ -17,9 +16,9 @@ type Product = {
   shortDescription?: string;
   usage?: string;
   benefits?: string[];
+  category?: string;
   images?: Array<string | ProductImage>;
   image?: string;
-  category?: string;
 };
 
 type Img = { src: string; alt: string };
@@ -30,6 +29,17 @@ function normalizeSlug(input: unknown) {
 
 function getTitle(p: Product) {
   return String(p.title ?? p.name ?? "Ürün");
+}
+
+function firstImage(p: Product) {
+  const imgs = p.images;
+  if (Array.isArray(imgs) && imgs.length > 0) {
+    const first = imgs[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object" && "src" in first) return String((first as any).src);
+  }
+  if (typeof p.image === "string" && p.image) return p.image;
+  return "/demo/urun-1.jpg";
 }
 
 function getImages(p: Product): Img[] {
@@ -43,23 +53,17 @@ function getImages(p: Product): Img[] {
     });
   }
 
-  if (typeof p.image === "string" && p.image) {
-    return [{ src: p.image, alt: title }];
-  }
-
-  return [{ src: "/demo/urun-1.jpg", alt: title }];
+  return [{ src: firstImage(p), alt: title }];
 }
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }> | { slug: string };
-}) {
-  const resolvedParams = (await (params as any)) as { slug: string };
-  const reqSlug = normalizeSlug(decodeURIComponent(resolvedParams.slug));
+function formatTRY(n: number) {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
+}
+
+export default function ProductPage({ params }: { params: { slug: string } }) {
+  const reqSlug = normalizeSlug(decodeURIComponent(params.slug));
 
   const list = products as Product[];
-
   const product = list.find((p) => normalizeSlug(p.slug) === reqSlug) ?? null;
 
   if (!product) {
@@ -67,7 +71,7 @@ export default async function ProductPage({
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-2xl font-bold text-zinc-900">Ürün bulunamadı</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Bu ürün kaldırılmış olabilir veya bağlantı yanlış olabilir.
+          Aradığınız ürün kaldırılmış olabilir veya bağlantı hatalı olabilir.
         </p>
         <div className="mt-6 flex gap-3">
           <Link
@@ -98,103 +102,91 @@ export default async function ProductPage({
   const details =
     (product.benefits ?? []).slice(0, 6).map((b, i) => ({ key: `Fayda ${i + 1}`, value: String(b) })) ?? [];
 
-  const category = String(product.category ?? "");
-  const similar = list
-    .filter((p) => normalizeSlug(p.slug) !== reqSlug)
-    .filter((p) => (category ? String(p.category ?? "") === category : true))
-    .slice(0, 6);
-
   const hasCompare = typeof compareAtPrice === "number" && compareAtPrice > price;
-  const pct = hasCompare ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
+  const pct = hasCompare ? Math.round(((compareAtPrice! - price) / compareAtPrice!) * 100) : 0;
 
   return (
-    <main className="mx-auto max-w-screen-xl px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-        <Link href="/" className="hover:text-zinc-900">Ana sayfa</Link>
-        <span>›</span>
+    <main className="mx-auto max-w-screen-xl px-4 py-6">
+      {/* breadcrumb */}
+      <div className="mb-4 flex items-center gap-2 text-sm text-zinc-600">
+        <Link href="/" className="hover:text-zinc-900">Ana Sayfa</Link>
+        <span className="text-zinc-400">/</span>
         <Link href="/magaza" className="hover:text-zinc-900">Mağaza</Link>
-        {category ? (
-          <>
-            <span>›</span>
-            <Link href={`/magaza?kat=${encodeURIComponent(category)}`} className="hover:text-zinc-900">
-              {category.replaceAll("-", " ")}
-            </Link>
-          </>
-        ) : null}
-        <span>›</span>
-        <span className="text-zinc-900">{title}</span>
+        <span className="text-zinc-400">/</span>
+        <span className="line-clamp-1 text-zinc-900">{title}</span>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-12">
-        {/* Left: Gallery */}
         <div className="lg:col-span-7">
-          <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <Gallery images={images as any} />
-          </div>
+          <Gallery images={images as any} />
         </div>
 
-        {/* Right: Info */}
         <div className="lg:col-span-5">
-          <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-            {brand ? (
-              <p className="text-xs font-semibold tracking-wide text-zinc-500">{brand.toUpperCase()}</p>
-            ) : null}
+          <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-zinc-500">
+                  {brand ? brand.toUpperCase() : "GÜZELLİK UZMANI"}
+                </div>
+                <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-zinc-900">{title}</h1>
+                <p className="mt-2 text-sm text-zinc-600">
+                  {product.shortDescription || "Uzman önerisiyle doğru rutini kur. Hızlı sonuç, temiz içerik (demo)."}
+                </p>
+              </div>
 
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-zinc-900">{title}</h1>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xl font-extrabold text-zinc-900">
-                {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(price)}
-              </span>
               {hasCompare ? (
-                <>
-                  <span className="text-sm font-semibold text-zinc-500 line-through">
-                    {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(compareAtPrice!)}
-                  </span>
-                  <span className="rounded-full bg-[#DB2777]/10 px-2 py-1 text-xs font-extrabold text-[#DB2777]">
-                    %{pct} indirim
-                  </span>
-                </>
+                <span className="mt-1 shrink-0 rounded-full bg-[#DB2777]/10 px-3 py-1 text-xs font-extrabold text-[#DB2777]">
+                  %{pct} indirim
+                </span>
               ) : null}
             </div>
 
-            <p className="mt-4 text-sm leading-6 text-zinc-600">
-              {product.shortDescription || "Uzman önerisiyle doğru rutini kur. Hızlı sonuç, temiz içerik (demo)."}
-            </p>
-
-            {/* Güven Barı */}
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                <p className="text-xs font-semibold text-zinc-500">🚚 Kargo</p>
-                <p className="mt-1 text-sm font-bold text-zinc-900">Hızlı teslimat</p>
-              </div>
-              <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                <p className="text-xs font-semibold text-zinc-500">🔄 İade</p>
-                <p className="mt-1 text-sm font-bold text-zinc-900">14 gün iade</p>
-              </div>
-              <div className="rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
-                <p className="text-xs font-semibold text-zinc-500">🔒 Ödeme</p>
-                <p className="mt-1 text-sm font-bold text-zinc-900">Güvenli ödeme</p>
-              </div>
+            {/* fiyat */}
+            <div className="mt-4 flex items-end justify-between">
+              <div className="text-2xl font-extrabold text-zinc-900">{formatTRY(price)}</div>
+              {hasCompare ? (
+                <div className="text-sm font-semibold text-zinc-500 line-through">
+                  {formatTRY(compareAtPrice!)}
+                </div>
+              ) : null}
             </div>
 
+            {/* satın alma paneli */}
             <BuyPanelReal
               id={String(product.slug ?? reqSlug)}
               title={title}
               price={price}
-              image={images?.[0]?.src}
+              image={firstImage(product)}
             />
+
+            {/* güven barı alanı (sen eklemiştin, korunuyor) */}
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-zinc-600">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                <div className="font-bold text-zinc-900">Hızlı Kargo</div>
+                <div className="mt-0.5">1-3 gün (demo)</div>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                <div className="font-bold text-zinc-900">Güvenli Ödeme</div>
+                <div className="mt-0.5">SSL + 3D (demo)</div>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                <div className="font-bold text-zinc-900">İade</div>
+                <div className="mt-0.5">14 gün (demo)</div>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+          {/* tabs */}
+          <div className="mt-6">
             <ProductTabs description={description} details={details} />
           </div>
         </div>
       </div>
 
-      {/* Benzer ürünler */}
-      <SimilarProducts title="Benzer ürünler" items={similar as any} />
+      {/* benzer ürünler */}
+      <div className="mt-10">
+        <SimilarProducts currentSlug={String(product.slug ?? reqSlug)} />
+      </div>
     </main>
   );
 }
