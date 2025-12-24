@@ -60,8 +60,9 @@ function formatTRY(n: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const reqSlug = normalizeSlug(decodeURIComponent(params.slug));
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const reqSlug = normalizeSlug(decodeURIComponent(slug));
 
   const list = products as Product[];
   const product = list.find((p) => normalizeSlug(p.slug) === reqSlug) ?? null;
@@ -107,7 +108,6 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
-      {/* breadcrumb */}
       <div className="mb-4 flex items-center gap-2 text-sm text-zinc-600">
         <Link href="/" className="hover:text-zinc-900">Ana Sayfa</Link>
         <span className="text-zinc-400">/</span>
@@ -141,7 +141,6 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               ) : null}
             </div>
 
-            {/* fiyat */}
             <div className="mt-4 flex items-end justify-between">
               <div className="text-2xl font-extrabold text-zinc-900">{formatTRY(price)}</div>
               {hasCompare ? (
@@ -151,7 +150,6 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               ) : null}
             </div>
 
-            {/* satın alma paneli */}
             <BuyPanelReal
               id={String(product.slug ?? reqSlug)}
               title={title}
@@ -159,7 +157,6 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
               image={firstImage(product)}
             />
 
-            {/* güven barı alanı (sen eklemiştin, korunuyor) */}
             <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-zinc-600">
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2">
                 <div className="font-bold text-zinc-900">Hızlı Kargo</div>
@@ -176,14 +173,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          {/* tabs */}
           <div className="mt-6">
             <ProductTabs description={description} details={details} />
           </div>
         </div>
       </div>
 
-      {/* benzer ürünler */}
       <div className="mt-10">
         <SimilarProducts currentSlug={String(product.slug ?? reqSlug)} />
       </div>
