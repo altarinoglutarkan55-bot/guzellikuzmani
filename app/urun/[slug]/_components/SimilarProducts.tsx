@@ -1,20 +1,21 @@
-﻿import Image from "next/image";
-import Link from "next/link";
+﻿import Link from "next/link";
+import Image from "next/image";
+import products from "@/data/products.json";
 
+type ProductImage = { src: string; alt?: string };
 type Product = {
   slug?: string;
   title?: string;
   name?: string;
   brand?: string;
   price?: number;
-  compareAtPrice?: number | null;
-  image?: string;
-  images?: Array<string | { src: string; alt?: string }>;
   category?: string;
+  images?: Array<string | ProductImage>;
+  image?: string;
 };
 
-function formatTRY(n: number) {
-  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
+function normalizeSlug(input: unknown) {
+  return String(input ?? "").toLowerCase().trim();
 }
 
 function getTitle(p: Product) {
@@ -22,79 +23,86 @@ function getTitle(p: Product) {
 }
 
 function firstImage(p: Product) {
-  if (typeof p.image === "string" && p.image) return p.image;
-
   const imgs = p.images;
   if (Array.isArray(imgs) && imgs.length > 0) {
     const first = imgs[0];
     if (typeof first === "string") return first;
-    if (first && typeof first === "object" && (first as any).src) return String((first as any).src);
+    if (first && typeof first === "object" && "src" in first) return String((first as any).src);
   }
+  if (typeof p.image === "string" && p.image) return p.image;
   return "/demo/urun-1.jpg";
 }
 
+function formatTRY(n: number) {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
+}
+
 export default function SimilarProducts({
-  title,
-  items,
+  currentSlug,
+  title = "Benzer Ürünler",
+  limit = 6,
 }: {
-  title: string;
-  items: Product[];
+  currentSlug: string;
+  title?: string;
+  limit?: number;
 }) {
-  if (!items?.length) return null;
+  const list = products as Product[];
+  const cur = list.find((p) => normalizeSlug(p.slug) === normalizeSlug(currentSlug)) ?? null;
+
+  // Aynı kategori öncelik, yoksa rastgele/ilk ürünler
+  const curCat = cur?.category ? String(cur.category) : "";
+
+  const items = list
+    .filter((p) => Boolean(p.slug))
+    .filter((p) => normalizeSlug(p.slug) !== normalizeSlug(currentSlug))
+    .sort((a, b) => {
+      const aSame = curCat && String(a.category ?? "") === curCat ? 0 : 1;
+      const bSame = curCat && String(b.category ?? "") === curCat ? 0 : 1;
+      return aSame - bSame;
+    })
+    .slice(0, limit);
+
+  if (!items.length) return null;
 
   return (
     <section className="mt-10">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-extrabold tracking-tight text-zinc-900">{title}</h2>
-        <Link href="/magaza" className="text-sm font-semibold text-[#7C3AED] hover:opacity-90">
-          Mağazaya git
+      <div className="mb-4 flex items-end justify-between">
+        <h2 className="text-lg font-extrabold tracking-tight text-zinc-900">{title}</h2>
+        <Link href="/magaza" className="text-sm font-semibold text-[#7C3AED] hover:opacity-80">
+          Tümünü gör
         </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => {
-          const hasCompare = typeof p.compareAtPrice === "number" && Number(p.compareAtPrice) > Number(p.price ?? 0);
+          const slug = String(p.slug);
+          const t = getTitle(p);
           const price = Number(p.price ?? 0);
-          const compare = Number(p.compareAtPrice ?? 0);
-          const pct = hasCompare ? Math.round(((compare - price) / compare) * 100) : 0;
 
           return (
             <Link
-              key={String(p.slug)}
-              href={`/urun/${p.slug}`}
-              className="relative rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md"
+              key={slug}
+              href={`/urun/${slug}`}
+              className="group rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md"
             >
-              {hasCompare ? (
-                <div className="absolute left-4 top-4 rounded-full bg-[#DB2777] px-2 py-1 text-xs font-extrabold text-white">
-                  %{pct} indirim
-                </div>
-              ) : null}
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-24 w-24 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
                   <Image
                     src={firstImage(p)}
-                    alt={getTitle(p)}
-                    width={96}
-                    height={96}
+                    alt={t}
+                    width={80}
+                    height={80}
                     className="object-contain"
                   />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-semibold text-zinc-900 hover:text-[#7C3AED]">
-                    {getTitle(p)}
-                  </p>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-extrabold text-zinc-900">{formatTRY(price)}</span>
-                    {hasCompare ? (
-                      <span className="text-xs font-semibold text-zinc-500 line-through">{formatTRY(compare)}</span>
-                    ) : null}
+                  <div className="line-clamp-2 text-sm font-semibold text-zinc-900 group-hover:text-[#7C3AED]">
+                    {t}
                   </div>
-
-                  <div className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-zinc-900 px-3 py-2 text-xs font-semibold text-white">
-                    İncele
+                  <div className="mt-2 text-sm font-extrabold text-zinc-900">{formatTRY(price)}</div>
+                  <div className="mt-1 text-xs text-zinc-500">
+                    {(p.category ?? "").toString().replaceAll("-", " ")}
                   </div>
                 </div>
               </div>
