@@ -1,239 +1,172 @@
 ﻿import Link from "next/link";
-import Image from "next/image";
 import { blogPosts } from "@/data/blogPosts";
+import VideoEmbed from "@/app/_components/VideoEmbed";
+import ProductMiniCard from "@/app/_components/ProductMiniCard";
+import TrackEventLink from "@/app/_components/TrackEventLink";
 
 export const revalidate = 60;
 
-type SearchParams = Promise<{ q?: string; tag?: string }>;
-
-function uniqueTags() {
-  const set = new Set<string>();
-  for (const p of blogPosts) for (const t of p.tags) set.add(t);
-  return Array.from(set).slice(0, 24);
-}
-
-function ytThumb(id: string) {
-  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
-}
-
-export default async function BlogPage({
-  searchParams,
-}: {
-  searchParams?: SearchParams;
-}) {
-  const sp = (await searchParams) ?? {};
-  const q = String(sp.q ?? "").trim().toLowerCase();
-  const tag = String(sp.tag ?? "").trim().toLowerCase();
-
-  const tags = uniqueTags();
-
-  const list = blogPosts
-    .slice()
-    .sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1))
-    .filter((p) => (tag ? p.tags.some((t) => t.toLowerCase() === tag) : true))
-    .filter((p) =>
-      q
-        ? (p.title + " " + p.excerpt + " " + p.tags.join(" "))
-            .toLowerCase()
-            .includes(q)
-        : true
-    );
-
-  const featuredVideos = blogPosts.filter((p) => !!p.video).slice(0, 4);
+export default function BlogPage() {
+  const published = blogPosts.filter((x) => x.published);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
-        >
-          ← Ana Sayfa
-        </Link>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl">
+            Blog • Profesyonel İçerikler
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-600">
+            Kuaför ve profesyoneller için rutinler, eğitim videoları ve ürün kullanım rehberleri.
+          </p>
+        </div>
 
-        <Link
-          href="/magaza"
-          className="inline-flex items-center rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-extrabold text-white hover:opacity-95"
-        >
-          Mağazaya git
-        </Link>
-      </div>
-
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
-        <p className="inline-flex items-center rounded-full bg-[#7C3AED]/10 px-3 py-1 text-xs font-bold text-[#7C3AED]">
-          Profesyonel içerikler • Video • Ürün yönlendirme
-        </p>
-        <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl">
-          Blog
-        </h1>
-        <p className="mt-2 text-sm text-zinc-600">
-          Kuaför ve profesyoneller için: teknik anlatımlar, ürün tanıtımları ve uygulama videoları.
-        </p>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <form className="md:col-span-2" action="/blog">
-            <div className="flex gap-2">
-              <input
-                name="q"
-                defaultValue={q}
-                placeholder="Ara: mor şampuan, keratin, saç dökülmesi..."
-                className="h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm outline-none focus:border-zinc-300"
-              />
-              {tag ? <input type="hidden" name="tag" value={tag} /> : null}
-              <button
-                type="submit"
-                className="h-11 rounded-2xl bg-zinc-900 px-5 text-sm font-extrabold text-white hover:opacity-95"
-              >
-                Ara
-              </button>
-            </div>
-          </form>
-
+        <div className="flex gap-2">
+          <Link
+            href="/magaza"
+            className="rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-extrabold text-white hover:opacity-95"
+          >
+            Mağazaya git
+          </Link>
           <Link
             href="/anket"
-            className="grid h-11 place-items-center rounded-2xl bg-[#DB2777] px-4 text-sm font-extrabold text-white hover:opacity-95"
+            className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
           >
-            Uzman önerisi al
+            Uzman önerisi
           </Link>
         </div>
-      </section>
+      </div>
 
-      {/* Etiketler */}
-      <section className="mt-6">
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/blog"
-            className={
-              "rounded-full border px-3 py-1 text-xs font-bold " +
-              (tag
-                ? "border-zinc-200 bg-white text-zinc-700"
-                : "border-zinc-900 bg-zinc-900 text-white")
-            }
-          >
-            Tümü
-          </Link>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
+          {published.map((p) => (
+            <article key={p.slug} className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+              <div className="flex flex-wrap items-center gap-2">
+                {(p.tags || []).map((t) => (
+                  <span key={t} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-bold text-zinc-700">
+                    {t}
+                  </span>
+                ))}
+                <span className="ml-auto text-xs font-bold text-zinc-500">{p.dateISO}</span>
+              </div>
 
-          {tags.map((t) => {
-            const active = t.toLowerCase() === tag;
-            const href =
-              `/blog?tag=${encodeURIComponent(t)}` +
-              (q ? `&q=${encodeURIComponent(q)}` : "");
+              <h2 className="mt-4 text-2xl font-extrabold text-zinc-900">{p.title}</h2>
+              <p className="mt-2 text-sm text-zinc-600">{p.excerpt}</p>
 
-            return (
+              {p.video?.url ? (
+                <div className="mt-5">
+                  <VideoEmbed provider={p.video.provider} url={p.video.url} title={p.title} />
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-bold text-zinc-500">
+                      Video: {p.video.provider === "youtube" ? "YouTube" : "MP4"}
+                    </div>
+
+                    <TrackEventLink
+                      href={p.video.url}
+                      eventName="blog_video_click"
+                      payload={{ postSlug: p.slug, provider: p.video.provider }}
+                      className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+                    >
+                      Videoyu yeni sekmede aç →
+                    </TrackEventLink>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-6 space-y-3">
+                {(p.content || []).map((para, i) => (
+                  <p key={i} className="text-sm leading-6 text-zinc-800">
+                    {para}
+                  </p>
+                ))}
+              </div>
+
+              {p.productSlugs?.length ? (
+                <div className="mt-7 rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="mb-3 flex items-end justify-between">
+                    <div>
+                      <div className="text-sm font-extrabold text-zinc-900">Bu içerikte önerilen ürünler</div>
+                      <div className="mt-1 text-xs font-bold text-zinc-500">
+                        Direkt sepete ekle veya ürün detayına git.
+                      </div>
+                    </div>
+                    <Link href="/magaza" className="text-sm font-bold text-[#7C3AED] hover:opacity-80">
+                      Tüm ürünler →
+                    </Link>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {p.productSlugs.map((s) => (
+                      <ProductMiniCard key={s} slug={s} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                <TrackEventLink
+                  href="/magaza"
+                  eventName="blog_cta_shop"
+                  payload={{ postSlug: p.slug }}
+                  className="rounded-2xl bg-[#7C3AED] px-4 py-2 text-sm font-extrabold text-white hover:opacity-95"
+                >
+                  Ürünlere geç
+                </TrackEventLink>
+                <TrackEventLink
+                  href="/anket"
+                  eventName="blog_cta_expert"
+                  payload={{ postSlug: p.slug }}
+                  className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+                >
+                  Uzman önerisi al
+                </TrackEventLink>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <aside className="lg:sticky lg:top-24 h-fit space-y-4">
+          <div className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="text-lg font-extrabold text-zinc-900">Profesyonel içerik akışı</div>
+            <p className="mt-2 text-sm text-zinc-600">
+              Yakında: kategori bazlı videolar (boyalı saç, keratin, perma), marka eğitimleri ve kuaför
+              ipuçları.
+            </p>
+
+            <div className="mt-4 grid gap-2">
               <Link
-                key={t}
-                href={href}
-                className={
-                  "rounded-full border px-3 py-1 text-xs font-bold " +
-                  (active
-                    ? "border-[#7C3AED] bg-[#7C3AED]/10 text-[#7C3AED]"
-                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300")
-                }
+                href="/magaza"
+                className="rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-extrabold text-white hover:opacity-95 text-center"
               >
-                {t}
+                Mağaza
               </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Video vitrin */}
-      {featuredVideos.length > 0 ? (
-        <section className="mt-10">
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <h2 className="text-xl font-extrabold text-zinc-900">Öne Çıkan Videolar</h2>
-              <p className="mt-1 text-sm text-zinc-600">Uygulama anlatımları ve ürün tanıtımları.</p>
+              <Link
+                href="/forum"
+                className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300 text-center"
+              >
+                Forum
+              </Link>
+              <Link
+                href="/anket"
+                className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300 text-center"
+              >
+                Uzman önerisi
+              </Link>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredVideos.map((p) => {
-              const v = p.video;
-              const thumb = v?.provider === "youtube" && v?.id ? ytThumb(v.id) : "/demo/blog-video.jpg";
-
-              return (
-                <Link
-                  key={p.slug}
-                  href={`/blog/${p.slug}`}
-                  className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm hover:shadow-md"
-                >
-                  <div className="relative aspect-video bg-zinc-100">
-                    <Image
-                      src={thumb}
-                      alt={p.title}
-                      fill
-                      sizes="(max-width: 1024px) 50vw, 25vw"
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/10" />
-                    <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-extrabold text-white">
-                      ▶ Video
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-zinc-500">{p.minutes} dk</span>
-                      <span className="text-xs font-bold text-[#7C3AED] group-hover:opacity-80">İzle →</span>
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm font-extrabold text-zinc-900 group-hover:text-[#7C3AED]">
-                      {p.title}
-                    </p>
-                    <p className="mt-2 line-clamp-2 text-sm text-zinc-600">{p.excerpt}</p>
-                  </div>
-                </Link>
-              );
-            })}
+          <div className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="text-sm font-extrabold text-zinc-900">Not</div>
+            <p className="mt-2 text-sm text-zinc-600">
+              Admin panel demo olduğu için şu an veri “memory”de tutulur. Bir sonraki adımda DB (Supabase/Neon),
+              auth ve gerçek içerik yönetimi ekleyeceğiz.
+            </p>
           </div>
-        </section>
-      ) : null}
-
-      {/* Yazılar */}
-      <section className="mt-10">
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-zinc-900">Yazılar</h2>
-            <p className="mt-1 text-sm text-zinc-600">{list.length} içerik bulundu</p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((p) => (
-            <Link
-              key={p.slug}
-              href={`/blog/${p.slug}`}
-              className="group rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {p.tags.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-700"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-xs font-bold text-zinc-500">{p.minutes} dk</span>
-              </div>
-
-              <h3 className="mt-3 line-clamp-2 text-lg font-extrabold text-zinc-900 group-hover:text-[#7C3AED]">
-                {p.title}
-              </h3>
-              <p className="mt-2 line-clamp-3 text-sm text-zinc-600">{p.excerpt}</p>
-
-              <div className="mt-4 flex items-center justify-between text-xs font-bold text-zinc-500">
-                <span>{p.author}</span>
-                <span>Oku →</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+        </aside>
+      </div>
 
       <div className="h-8" />
     </main>
   );
 }
+
