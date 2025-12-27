@@ -1,4 +1,5 @@
-﻿// app/magaza/page.tsx
+﻿import Link from "next/link";
+// app/magaza/page.tsx
 import MagazaClient from "./_components/MagazaClient";
 import { getAllProducts } from "../../lib/products";
 type Product = {
@@ -101,8 +102,25 @@ export default async function MagazaPage({
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
+  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <Link
+      href="/"
+      className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+    >
+      ← Ana Sayfa
+    </Link>
+
+    <Link
+      href="/anket"
+      className="inline-flex items-center rounded-2xl bg-[#7C3AED] px-4 py-2 text-sm font-extrabold text-white hover:opacity-95"
+    >
+      Uzmanına Danış
+    </Link>
+  </div>
+
       <MagazaClient products={list as any} initial={initial as any} />
     </main>
   );
 }
+
 
