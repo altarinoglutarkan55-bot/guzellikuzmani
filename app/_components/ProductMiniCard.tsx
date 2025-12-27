@@ -1,6 +1,6 @@
-﻿import Link from "next/link";
-import Image from "next/image";
+﻿import Image from "next/image";
 import products from "@/data/products.json";
+import TrackEventLink from "@/app/_components/TrackEventLink";
 
 type ProductImage = { src: string; alt?: string };
 type Product = {
@@ -45,20 +45,37 @@ export default function ProductMiniCard({ slug }: { slug: string }) {
   const price = Number(p.price ?? 0);
 
   return (
-    <Link
-      href={`/urun/${s}`}
-      className="group flex items-center gap-3 rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-md"
-    >
-      <div className="flex h-14 w-14 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
-        <Image src={img} alt={title} width={56} height={56} className="object-contain" />
+    <div className="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-md">
+      <div className="flex items-center gap-3">
+        <div className="flex h-14 w-14 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
+          <Image src={img} alt={title} width={56} height={56} className="object-contain" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-sm font-extrabold text-zinc-900">
+            {title}
+          </p>
+          <p className="mt-1 text-sm font-extrabold text-zinc-900">{formatTRY(price)}</p>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-sm font-extrabold text-zinc-900 group-hover:text-[#7C3AED]">
-          {title}
-        </p>
-        <p className="mt-1 text-sm font-extrabold text-zinc-900">{formatTRY(price)}</p>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <TrackEventLink
+          href={`/urun/${s}`}
+          event={{ type: "blog_product_click", action: "view_product", productSlug: s }}
+          className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+        >
+          Ürüne git
+        </TrackEventLink>
+
+        <TrackEventLink
+          href={`/urun/${s}`}
+          event={{ type: "blog_product_click", action: "add_to_cart_intent", productSlug: s }}
+          className="inline-flex items-center justify-center rounded-2xl bg-[#7C3AED] px-4 py-2 text-sm font-extrabold text-white hover:opacity-95"
+        >
+          Sepete ekle
+        </TrackEventLink>
       </div>
-      <span className="text-xs font-bold text-zinc-500">Ürüne git →</span>
-    </Link>
+    </div>
   );
 }
