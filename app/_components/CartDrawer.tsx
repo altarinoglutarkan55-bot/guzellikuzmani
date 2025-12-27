@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/app/providers";
 
 function formatTRY(n: number) {
@@ -10,13 +10,50 @@ function formatTRY(n: number) {
 }
 
 export default function CartDrawer() {
-  const { isOpen, close, items, count, subtotal, discount, shipping, total, inc, dec, remove, clear, coupon, setCoupon } =
-    useCart();
+  const {
+    isOpen,
+    close,
+    items,
+    count,
+    subtotal,
+    discount,
+    shipping,
+    total,
+    inc,
+    dec,
+    remove,
+    clear,
+    coupon,
+    setCoupon,
+  } = useCart();
 
   const [code, setCode] = useState(coupon ?? "");
 
+  // ✅ body scroll lock + ESC close
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+
+    // scrollbar jump fix
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollBarWidth > 0) document.body.style.paddingRight = `${scrollBarWidth}px`;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, [isOpen, close]);
+
   const progress = useMemo(() => {
-    // ücretsiz kargo eşiği 1000
     const threshold = 1000;
     const paid = Math.max(0, subtotal - discount);
     const left = Math.max(0, threshold - paid);
@@ -27,10 +64,18 @@ export default function CartDrawer() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70]" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-      <div className="absolute inset-0 bg-black/45" />
+    <div
+      className="fixed inset-0 z-[80]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sepet"
+      onMouseDown={(e) => e.target === e.currentTarget && close()}
+    >
+      {/* ✅ Daha koyu + blur overlay (karışma biter) */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl">
+      {/* ✅ Panel tamamen opak + ayrışan border/shadow */}
+      <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl border-l border-zinc-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
           <div>
@@ -109,7 +154,7 @@ export default function CartDrawer() {
                         >
                           −
                         </button>
-                        <div className="h-9 w-10 grid place-items-center text-sm font-extrabold text-zinc-900">
+                        <div className="grid h-9 w-10 place-items-center text-sm font-extrabold text-zinc-900">
                           {it.qty}
                         </div>
                         <button
@@ -164,7 +209,9 @@ export default function CartDrawer() {
                 Uygula
               </button>
             </div>
-            <p className="mt-2 text-[11px] text-zinc-600">Demo kupon: <b>TOLGA10</b> (%10)</p>
+            <p className="mt-2 text-[11px] text-zinc-600">
+              Demo kupon: <b>TOLGA10</b> (%10)
+            </p>
           </div>
 
           <div className="space-y-2 text-sm">
@@ -182,7 +229,7 @@ export default function CartDrawer() {
             </div>
 
             <div className="mt-2 flex items-center justify-between border-t border-zinc-200 pt-3">
-              <span className="text-zinc-900 font-extrabold">Toplam</span>
+              <span className="font-extrabold text-zinc-900">Toplam</span>
               <span className="text-lg font-extrabold text-zinc-900">{formatTRY(total)}</span>
             </div>
           </div>
@@ -191,14 +238,14 @@ export default function CartDrawer() {
             <Link
               href="/odeme"
               onClick={close}
-              className="h-11 rounded-2xl bg-[#7C3AED] px-4 grid place-items-center text-sm font-extrabold text-white hover:opacity-95"
+              className="grid h-11 place-items-center rounded-2xl bg-[#7C3AED] px-4 text-sm font-extrabold text-white hover:opacity-95"
             >
               Ödemeye Geç
             </Link>
             <Link
               href="/magaza"
               onClick={close}
-              className="h-11 rounded-2xl border border-zinc-200 bg-white px-4 grid place-items-center text-sm font-semibold text-zinc-900 hover:border-zinc-300"
+              className="grid h-11 place-items-center rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-900 hover:border-zinc-300"
             >
               Alışverişe Devam Et
             </Link>
