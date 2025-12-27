@@ -2,6 +2,8 @@
 import Image from "next/image";
 import products from "@/data/products.json";
 
+
+import BlogForumShowcase from "./_components/BlogForumShowcase";
 type ProductImage = { src: string; alt?: string };
 type Product = {
   slug?: string;
@@ -296,6 +298,8 @@ export default function HomePage() {
         </div>
       </section>
 
+            <BlogForumShowcase />
+
       {/* ALT CTA */}
       <section className="mt-10 rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -328,3 +332,4 @@ export default function HomePage() {
     </main>
   );
 }
+
