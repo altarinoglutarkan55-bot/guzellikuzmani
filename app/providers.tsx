@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-type CartItem = {
+export type CartItem = {
   id: string;
   title: string;
   price: number;
@@ -10,41 +10,50 @@ type CartItem = {
   qty: number;
 };
 
-type AddItem = {
-  id: string;
-  title: string;
-  price: number;
-  image?: string;
-};
-
 type CartCtx = {
-  items: CartItem[];
-  count: number;
-  subtotal: number;
-
   isOpen: boolean;
   open: () => void;
   close: () => void;
 
-  add: (item: AddItem, qty?: number) => void;
+  items: CartItem[];
+  count: number;
+
+  // hesaplar
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  total: number;
+
+  // kupon
+  coupon: string;
+  setCoupon: (code: string) => void;
+
+  add: (item: Omit<CartItem, "qty">, qty?: number) => void;
   inc: (id: string) => void;
   dec: (id: string) => void;
   remove: (id: string) => void;
   clear: () => void;
 };
 
-const CartContext = createContext<CartCtx | null>(null);
+const Ctx = createContext<CartCtx | null>(null);
 
-const STORAGE_KEY = "guzellikuzmani_cart_v1";
+const LS_KEY = "gz_cart_v1";
+const LS_COUPON = "gz_coupon_v1";
+
+function safeNumber(n: unknown) {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : 0;
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [coupon, setCouponState] = useState("");
 
-  // Load from storage
+  // ✅ 1) İlk yüklemede localStorage oku (setState-in-effect lint'i umursamıyoruz; build lint kapalı)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(LS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setItems(parsed);
@@ -52,57 +61,85 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+    try {
+      const c = localStorage.getItem(LS_COUPON);
+      if (c) setCouponState(String(c));
+    } catch {
+      // ignore
+    }
   }, []);
 
-  // Save to storage
+  // ✅ 2) items değişince kaydet
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(LS_KEY, JSON.stringify(items));
     } catch {
       // ignore
     }
   }, [items]);
 
-  const count = useMemo(() => items.reduce((a, x) => a + (x.qty ?? 0), 0), [items]);
-  const subtotal = useMemo(() => items.reduce((a, x) => a + (x.price ?? 0) * (x.qty ?? 0), 0), [items]);
+  // ✅ 3) coupon değişince kaydet
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_COUPON, String(coupon ?? ""));
+    } catch {
+      // ignore
+    }
+  }, [coupon]);
 
-  const value: CartCtx = {
-    items,
-    count,
-    subtotal,
+  const api = useMemo<CartCtx>(() => {
+    const count = items.reduce((a, x) => a + safeNumber(x.qty), 0);
+    const subtotal = items.reduce((a, x) => a + safeNumber(x.price) * safeNumber(x.qty), 0);
 
-    isOpen,
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
+    // ✅ Demo kupon: "TOLGA10" => %10 indirim (şimdilik)
+    const code = (coupon ?? "").trim().toUpperCase();
+    const discount = code === "TOLGA10" ? Math.round(subtotal * 0.1) : 0;
 
-    add: (item, qty = 1) => {
-      setItems((prev) => {
-        const q = Math.max(1, Number(qty) || 1);
-        const idx = prev.findIndex((x) => x.id === item.id);
-        if (idx >= 0) {
-          const next = [...prev];
-          next[idx] = { ...next[idx], qty: next[idx].qty + q };
-          return next;
-        }
-        return [...prev, { ...item, qty: q }];
-      });
-    },
+    // ✅ Demo kargo: 1000 TL üzeri ücretsiz, altı 59 TL
+    const shipping = subtotal - discount >= 1000 ? 0 : (count > 0 ? 59 : 0);
 
-    inc: (id) =>
-      setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
+    const total = Math.max(0, subtotal - discount + shipping);
 
-    dec: (id) =>
-      setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))),
+    return {
+      isOpen,
+      open: () => setIsOpen(true),
+      close: () => setIsOpen(false),
 
-    remove: (id) => setItems((p) => p.filter((x) => x.id !== id)),
-    clear: () => setItems([]),
-  };
+      items,
+      count,
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+      subtotal,
+      discount,
+      shipping,
+      total,
+
+      coupon,
+      setCoupon: (c) => setCouponState(String(c ?? "")),
+
+      add: (item, qty = 1) => {
+        const q = Math.max(1, safeNumber(qty));
+        setItems((prev) => {
+          const id = String(item.id);
+          const ex = prev.find((x) => x.id === id);
+          if (ex) return prev.map((x) => (x.id === id ? { ...x, qty: x.qty + q } : x));
+          return [...prev, { ...item, id, qty: q }];
+        });
+      },
+      inc: (id) => setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
+      dec: (id) =>
+        setItems((p) =>
+          p.map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))
+        ),
+      remove: (id) => setItems((p) => p.filter((x) => x.id !== id)),
+      clear: () => setItems([]),
+    };
+  }, [isOpen, items, coupon]);
+
+  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
 
 export function useCart() {
-  const ctx = useContext(CartContext);
+  const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useCart must be used within <Providers />");
   return ctx;
 }
