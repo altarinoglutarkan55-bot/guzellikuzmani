@@ -1,161 +1,292 @@
-﻿import Image from "next/image";
-import Link from "next/link";
-import { getAllProducts } from "@/lib/products";
-import AddToCartHome from "@/app/_components/AddToCartHome";
+﻿import Link from "next/link";
+import Image from "next/image";
+import products from "@/data/products.json";
+
+type ProductImage = { src: string; alt?: string };
+type Product = {
+  slug?: string;
+  title?: string;
+  name?: string;
+  brand?: string;
+  price?: number;
+  compareAtPrice?: number | null;
+  category?: string;
+  images?: Array<string | ProductImage>;
+  image?: string;
+};
+
+function normalizeSlug(input: unknown) {
+  return String(input ?? "").toLowerCase().trim();
+}
+
+function getTitle(p: Product) {
+  return String(p.title ?? p.name ?? "Ürün");
+}
+
+function firstImage(p: any) {
+  const imgs = p?.images;
+  if (Array.isArray(imgs) && imgs.length > 0) {
+    const first = imgs[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object" && first.src) return String(first.src);
+  }
+  if (typeof p?.image === "string") return p.image;
+  return "/demo/urun-1.jpg";
+}
 
 function formatTRY(n: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
 }
 
-const collections = [
-  {
-    title: "Saç Bakımı",
-    desc: "Şampuan, maske, serum",
-    href: "/magaza?kat=sac",
-    img: "/demo/urun-1.jpg",
-  },
-  {
-    title: "Saç Derisi",
-    desc: "Tonik, arındırma, denge",
-    href: "/magaza?kat=sac-derisi",
-    img: "/demo/urun-4.jpg",
-  },
-  {
-    title: "Cilt",
-    desc: "Temizleme, nem, SPF",
-    href: "/magaza?kat=cilt",
-    img: "/demo/urun-2.jpg",
-  },
-];
+export const revalidate = 60;
 
 export default function HomePage() {
-  const products = getAllProducts();
+  const list = (products as Product[])
+    .map((p) => ({
+      slug: normalizeSlug(p.slug),
+      title: getTitle(p),
+      brand: p.brand ? String(p.brand) : "",
+      price: Number(p.price ?? 0),
+      compareAtPrice:
+        typeof p.compareAtPrice === "number" ? Number(p.compareAtPrice) : null,
+      category: String(p.category ?? ""),
+      image: firstImage(p),
+    }))
+    .filter((p) => Boolean(p.slug));
 
-  // Basit bestseller seçimi: compareAtPrice olanları öne al, yoksa ilk 4
-  const sorted = [...products].sort((a: any, b: any) => {
-    const aHas = typeof a?.compareAtPrice === "number" && a.compareAtPrice > a.price;
-    const bHas = typeof b?.compareAtPrice === "number" && b.compareAtPrice > b.price;
-    return Number(bHas) - Number(aHas);
-  });
+  const categories = Array.from(
+    new Set(list.map((p) => p.category).filter(Boolean))
+  ).slice(0, 8);
 
-  const bestsellers = sorted.slice(0, 6);
+  const bestsellers = list.slice(0, 8);
 
   return (
-    <div className="bg-white">
-      {/* HERO */}
-      <section className="mx-auto max-w-screen-xl px-4 pt-10">
-        <div className="rounded-3xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-8">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
-            Daha az ürün,
-            <br />
-            daha doğru seçim.
-          </h1>
-
-          <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600">
-            60 saniyelik mini anketle saç tipini seç. Uzman önerileriyle doğru bakımı bul.
+    <main className="mx-auto max-w-screen-xl px-4 py-6">
+      {/* ÜST KAMPANYA BANDI */}
+      <div className="mb-4 rounded-3xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-800 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p>
+            🎁 <span className="font-semibold">Yeni yıl kampanyası (demo)</span>:
+            750₺ üzeri kargo ücretsiz • Sepette ekstra fırsatlar
           </p>
+          <Link
+            href="/magaza"
+            className="rounded-2xl bg-zinc-900 px-4 py-2 text-xs font-extrabold text-white hover:opacity-95"
+          >
+            Mağazaya git
+          </Link>
+        </div>
+      </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/anket" className="rounded-xl bg-[#7C3AED] px-6 py-3 text-sm font-semibold text-white">
-              Anketi Başlat
-            </Link>
-            <Link href="/magaza" className="rounded-xl border border-zinc-200 bg-white px-6 py-3 text-sm font-semibold text-zinc-900 hover:border-zinc-300">
-              Mağazayı Keşfet
-            </Link>
+      {/* HERO */}
+      <section className="relative overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
+        <div className="grid gap-6 p-6 md:grid-cols-2 md:p-10">
+          <div>
+            <p className="inline-flex items-center rounded-full bg-[#7C3AED]/10 px-3 py-1 text-xs font-bold text-[#7C3AED]">
+              Uzman önerisi + hızlı alışveriş
+            </p>
+
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl">
+              Saç & cilt rutinin için doğru ürünleri bul.
+            </h1>
+
+            <p className="mt-3 text-sm leading-6 text-zinc-600">
+              guzellikuzmani ile ürünleri keşfet, hızlıca sepete ekle, istersen
+              anketle uzman önerisi al. (Şu an demo altyapı)
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/magaza"
+                className="rounded-2xl bg-zinc-900 px-5 py-3 text-sm font-extrabold text-white hover:opacity-95"
+              >
+                Alışverişe başla
+              </Link>
+              <Link
+                href="/anket"
+                className="rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+              >
+                Uzman önerisi al
+              </Link>
+              <Link
+                href="/odeme"
+                className="rounded-2xl bg-[#DB2777] px-5 py-3 text-sm font-extrabold text-white hover:opacity-95"
+              >
+                Ödeme (demo)
+              </Link>
+            </div>
+
+            {/* TRUST */}
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs font-semibold text-zinc-500">Kargo</p>
+                <p className="text-sm font-extrabold text-zinc-900">Hızlı teslimat</p>
+              </div>
+              <div className="rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs font-semibold text-zinc-500">İade</p>
+                <p className="text-sm font-extrabold text-zinc-900">Kolay iade</p>
+              </div>
+              <div className="rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs font-semibold text-zinc-500">Destek</p>
+                <p className="text-sm font-extrabold text-zinc-900">Canlı destek</p>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
-              <p className="text-xs font-semibold text-zinc-500">🚚 Kargo</p>
-              <p className="mt-1 text-sm font-bold text-zinc-900">Hızlı teslimat (demo)</p>
-            </div>
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
-              <p className="text-xs font-semibold text-zinc-500">🔄 İade</p>
-              <p className="mt-1 text-sm font-bold text-zinc-900">14 gün iade (demo)</p>
-            </div>
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
-              <p className="text-xs font-semibold text-zinc-500">🔒 Ödeme</p>
-              <p className="mt-1 text-sm font-bold text-zinc-900">Güvenli ödeme (demo)</p>
+          {/* Görsel alan */}
+          <div className="relative">
+            <div className="absolute -right-10 -top-10 h-56 w-56 rounded-full bg-[#7C3AED]/10 blur-2xl" />
+            <div className="absolute -bottom-10 -left-10 h-56 w-56 rounded-full bg-[#DB2777]/10 blur-2xl" />
+
+            <div className="relative rounded-[28px] border border-zinc-200 bg-zinc-50 p-6">
+              <p className="text-xs font-bold text-zinc-500">Öne çıkan</p>
+              <p className="mt-2 text-lg font-extrabold text-zinc-900">
+                Mor Şampuan • Keratin • Saç Bakım Setleri
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {bestsellers.slice(0, 4).map((p) => (
+                  <Link
+                    key={p.slug}
+                    href={`/urun/${p.slug}`}
+                    className="group rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
+                        <Image
+                          src={p.image}
+                          alt={p.title}
+                          width={56}
+                          height={56}
+                          className="object-contain"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-xs font-bold text-zinc-900 group-hover:text-[#7C3AED]">
+                          {p.title}
+                        </p>
+                        <p className="mt-1 text-xs font-extrabold text-zinc-900">
+                          {formatTRY(p.price)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-5">
+                <Link
+                  href="/magaza"
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-extrabold text-white hover:opacity-95"
+                >
+                  Tüm ürünleri gör
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* COLLECTIONS */}
-      <section className="mx-auto max-w-screen-xl px-4 pt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900">Kategoriler</h2>
-          <Link href="/magaza" className="text-sm font-semibold text-[#7C3AED] hover:opacity-90">
-            Tümünü gör
+      {/* KATEGORİLER */}
+      <section className="mt-10">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-extrabold text-zinc-900">Kategoriler</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              Ürünleri kategoriye göre keşfet.
+            </p>
+          </div>
+          <Link
+            href="/magaza"
+            className="text-sm font-bold text-[#7C3AED] hover:opacity-80"
+          >
+            Hepsini gör →
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {collections.map((c) => (
-            <Link key={c.title} href={c.href} className="group rounded-3xl border border-zinc-200 bg-white p-4 hover:shadow-sm">
-              <Image src={c.img} alt={c.title} width={520} height={320} className="h-40 w-full rounded-2xl object-cover" />
-              <p className="mt-3 font-semibold text-zinc-900 group-hover:text-[#7C3AED]">{c.title}</p>
-              <p className="text-sm text-zinc-600">{c.desc}</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {categories.map((kat) => (
+            <Link
+              key={kat}
+              href={`/magaza?kat=${encodeURIComponent(kat)}`}
+              className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md"
+            >
+              <p className="text-xs font-bold text-zinc-500">Kategori</p>
+              <p className="mt-2 text-base font-extrabold text-zinc-900">
+                {kat.replaceAll("-", " ")}
+              </p>
+              <p className="mt-2 text-sm text-zinc-600">
+                Ürünleri görüntüle →
+              </p>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* BESTSELLERS */}
-      <section className="mx-auto max-w-screen-xl px-4 py-12">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900">Çok Satanlar</h2>
-          <Link href="/magaza" className="text-sm font-semibold text-[#7C3AED] hover:opacity-90">
-            Mağazaya git
+      {/* ÇOK SATANLAR */}
+      <section className="mt-10">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-extrabold text-zinc-900">Çok Satanlar</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              En çok incelenen ürünler (demo sıralama).
+            </p>
+          </div>
+          <Link
+            href="/magaza"
+            className="text-sm font-bold text-[#7C3AED] hover:opacity-80"
+          >
+            Mağazaya git →
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bestsellers.map((p: any) => {
-            const img = p?.image ?? (Array.isArray(p?.images) && p.images.length ? (typeof p.images[0] === "string" ? p.images[0] : p.images[0]?.src) : null) ?? "/demo/urun-1.jpg";
-            const hasCompare = typeof p?.compareAtPrice === "number" && p.compareAtPrice > p.price;
-            const pct = hasCompare ? Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100) : 0;
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {bestsellers.map((p) => {
+            const hasCompare =
+              typeof p.compareAtPrice === "number" && p.compareAtPrice > p.price;
+            const pct = hasCompare
+              ? Math.round(((p.compareAtPrice! - p.price) / p.compareAtPrice!) * 100)
+              : 0;
 
             return (
               <Link
                 key={p.slug}
                 href={`/urun/${p.slug}`}
-                className="relative rounded-3xl border border-zinc-200 bg-white p-4 hover:shadow-sm"
+                className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md"
               >
-                {hasCompare ? (
-                  <div className="absolute left-4 top-4 rounded-full bg-[#DB2777] px-2 py-1 text-xs font-extrabold text-white">
-                    %{pct} indirim
-                  </div>
-                ) : null}
-
                 <div className="flex items-start gap-4">
-                  <div className="flex h-24 w-24 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
-                    <Image src={img} alt={p.title} width={96} height={96} className="object-contain" />
+                  <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-2xl bg-zinc-50 ring-1 ring-zinc-200">
+                    <Image
+                      src={p.image}
+                      alt={p.title}
+                      width={80}
+                      height={80}
+                      className="object-contain"
+                    />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-semibold text-zinc-900 hover:text-[#7C3AED]">{p.title}</p>
+                    <p className="line-clamp-2 text-sm font-extrabold text-zinc-900">
+                      {p.title}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {p.category.replaceAll("-", " ")}
+                    </p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-extrabold text-zinc-900">{formatTRY(Number(p.price ?? 0))}</span>
-                      {hasCompare ? (
-                        <span className="text-xs font-semibold text-zinc-500 line-through">
-                          {formatTRY(Number(p.compareAtPrice))}
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-3 flex gap-2">
-                      <span className="inline-flex flex-1 items-center justify-center rounded-2xl bg-zinc-900 px-3 py-2 text-xs font-semibold text-white">
-                        İncele
+                      <span className="text-sm font-extrabold text-zinc-900">
+                        {formatTRY(p.price)}
                       </span>
-
-                      <AddToCartHome
-                        id={String(p.slug)}
-                        title={String(p.title ?? "Ürün")}
-                        price={Number(p.price ?? 0)}
-                        image={typeof img === "string" ? img : undefined}
-                      />
+                      {hasCompare ? (
+                        <>
+                          <span className="text-xs font-bold text-zinc-500 line-through">
+                            {formatTRY(p.compareAtPrice!)}
+                          </span>
+                          <span className="rounded-full bg-[#DB2777]/10 px-2 py-0.5 text-xs font-extrabold text-[#DB2777]">
+                            %{pct} indirim
+                          </span>
+                        </>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -164,6 +295,36 @@ export default function HomePage() {
           })}
         </div>
       </section>
-    </div>
+
+      {/* ALT CTA */}
+      <section className="mt-10 rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h3 className="text-xl font-extrabold text-zinc-900">
+              Kararsız mısın? 2 dakikada öneri al.
+            </h3>
+            <p className="mt-1 text-sm text-zinc-600">
+              Anketi doldur, saç/saç derisi ihtiyacına göre öneri sunalım.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Link
+              href="/anket"
+              className="rounded-2xl bg-[#7C3AED] px-5 py-3 text-sm font-extrabold text-white hover:opacity-95"
+            >
+              Anketi başlat
+            </Link>
+            <Link
+              href="/magaza"
+              className="rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-extrabold text-zinc-900 hover:border-zinc-300"
+            >
+              Mağazaya git
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="h-6" />
+    </main>
   );
 }
