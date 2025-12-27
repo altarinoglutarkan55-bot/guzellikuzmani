@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+﻿@import "tailwindcss";
 
 /* ---------- THEME ---------- */
 :root{
@@ -9,7 +7,7 @@
   --muted: 107 114 128;
   --border: 229 231 235;
 
-  /* kadınlara hitap eden mor + pembe dokunuş */
+  /* kadÄ±nlara hitap eden mor + pembe dokunuÅŸ */
   --primary: 124 58 237;   /* #7C3AED */
   --primary2: 219 39 119;  /* #DB2777 */
   --soft: 245 243 255;     /* violet-50 */
@@ -97,3 +95,4 @@ body { background: rgb(var(--bg)); color: rgb(var(--text)); }
 /* Category slider scrollbar gizle */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
