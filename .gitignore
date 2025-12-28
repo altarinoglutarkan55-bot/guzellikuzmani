@@ -46,3 +46,8 @@ next-env.d.ts
 app__backup_*
 # backups (do not ship)
 app__backup_*/
+*.bak
+*.bak-*
+tools/
+
+*.bak2

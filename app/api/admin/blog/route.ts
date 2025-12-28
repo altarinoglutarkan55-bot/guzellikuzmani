@@ -9,18 +9,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   if (!body.slug || !body.title) {
-    return NextResponse.json(
-      { error: "slug ve title zorunludur" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "slug ve title zorunludur" }, { status: 400 });
   }
 
   const exists = blogPosts.find((b) => b.slug === body.slug);
   if (exists) {
-    return NextResponse.json(
-      { error: "Bu slug zaten mevcut" },
-      { status: 409 }
-    );
+    return NextResponse.json({ error: "Bu slug zaten mevcut" }, { status: 409 });
   }
 
   const item: BlogPost = {
@@ -32,7 +26,7 @@ export async function POST(req: NextRequest) {
     content: body.content || [],
     video: body.video,
     productSlugs: body.productSlugs || [],
-    author: body.author || "Güzellik Uzmaný",
+    author: body.author || "GÃ¼zellik UzmanÄ±",
   };
 
   blogPosts.unshift(item);
