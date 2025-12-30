@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { SessionProvider } from "next-auth/react";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
@@ -18,13 +19,11 @@ type CartCtx = {
   items: CartItem[];
   count: number;
 
-  // hesaplar
   subtotal: number;
   discount: number;
   shipping: number;
   total: number;
 
-  // kupon
   coupon: string;
   setCoupon: (code: string) => void;
 
@@ -37,67 +36,17 @@ type CartCtx = {
 
 const Ctx = createContext<CartCtx | null>(null);
 
-const LS_KEY = "gz_cart_v1";
-const LS_COUPON = "gz_coupon_v1";
-
-function safeNumber(n: unknown) {
-  const x = Number(n);
-  return Number.isFinite(x) ? x : 0;
-}
-
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
-  const [coupon, setCouponState] = useState("");
-
-  // ✅ 1) İlk yüklemede localStorage oku (setState-in-effect lint'i umursamıyoruz; build lint kapalı)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setItems(parsed);
-      }
-    } catch {
-      // ignore
-    }
-    try {
-      const c = localStorage.getItem(LS_COUPON);
-      if (c) setCouponState(String(c));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // ✅ 2) items değişince kaydet
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(items));
-    } catch {
-      // ignore
-    }
-  }, [items]);
-
-  // ✅ 3) coupon değişince kaydet
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_COUPON, String(coupon ?? ""));
-    } catch {
-      // ignore
-    }
-  }, [coupon]);
+  const [coupon, setCoupon] = useState("");
 
   const api = useMemo<CartCtx>(() => {
-    const count = items.reduce((a, x) => a + safeNumber(x.qty), 0);
-    const subtotal = items.reduce((a, x) => a + safeNumber(x.price) * safeNumber(x.qty), 0);
+    const count = items.reduce((a, x) => a + x.qty, 0);
+    const subtotal = items.reduce((a, x) => a + x.price * x.qty, 0);
 
-    // ✅ Demo kupon: "TOLGA10" => %10 indirim (şimdilik)
-    const code = (coupon ?? "").trim().toUpperCase();
-    const discount = code === "TOLGA10" ? Math.round(subtotal * 0.1) : 0;
-
-    // ✅ Demo kargo: 1000 TL üzeri ücretsiz, altı 59 TL
-    const shipping = subtotal - discount >= 1000 ? 0 : (count > 0 ? 59 : 0);
-
+    const discount = coupon === "TOLGA10" ? Math.round(subtotal * 0.1) : 0;
+    const shipping = subtotal - discount >= 1000 ? 0 : count > 0 ? 59 : 0;
     const total = Math.max(0, subtotal - discount + shipping);
 
     return {
@@ -114,17 +63,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       total,
 
       coupon,
-      setCoupon: (c) => setCouponState(String(c ?? "")),
+      setCoupon,
 
-      add: (item, qty = 1) => {
-        const q = Math.max(1, safeNumber(qty));
-        setItems((prev) => {
-          const id = String(item.id);
-          const ex = prev.find((x) => x.id === id);
-          if (ex) return prev.map((x) => (x.id === id ? { ...x, qty: x.qty + q } : x));
-          return [...prev, { ...item, id, qty: q }];
-        });
-      },
+      add: (item, qty = 1) =>
+        setItems((p) => {
+          const ex = p.find((x) => x.id === item.id);
+          return ex
+            ? p.map((x) => (x.id === item.id ? { ...x, qty: x.qty + qty } : x))
+            : [...p, { ...item, qty }];
+        }),
       inc: (id) => setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
       dec: (id) =>
         setItems((p) =>
@@ -133,13 +80,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       remove: (id) => setItems((p) => p.filter((x) => x.id !== id)),
       clear: () => setItems([]),
     };
-  }, [isOpen, items, coupon]);
+  }, [items, coupon]);
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  return (
+    <SessionProvider>
+      <Ctx.Provider value={api}>{children}</Ctx.Provider>
+    </SessionProvider>
+  );
 }
 
 export function useCart() {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useCart must be used within <Providers />");
+  if (!ctx) throw new Error("useCart must be used within Providers");
   return ctx;
 }

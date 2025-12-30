@@ -51,3 +51,5 @@ app__backup_*/
 tools/
 
 *.bak2
+
+/generated/prisma

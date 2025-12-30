@@ -1,95 +1,229 @@
-// app/admin/page.tsx
-import Link from "next/link";
-import { getAllProducts, getProductName, getProductSlug } from "../../lib/products";
+﻿import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/_lib/auth";
+import { prisma } from "@/app/_lib/prisma";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
-export const revalidate = 60;
+type AppStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const sp = await searchParams;
-  const key = Array.isArray(sp.key) ? sp.key[0] : sp.key;
+export default async function AdminPage() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
 
-  const expected = process.env.ADMIN_KEY;
+  if (!email) redirect("/api/auth/signin");
 
-  if (!expected || key !== expected) {
-    return (
-      <main className="mx-auto max-w-screen-md px-4 py-10">
-        <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900">Erişim reddedildi</h1>
-          <p className="mt-2 text-sm text-zinc-600">Bu sayfa admin anahtarı gerektirir.</p>
+  const me = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, adminApproved: true, role: true, email: true },
+  });
 
-          <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-[12px] text-zinc-700">
-            /admin?key=YOUR_ADMIN_KEY
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:border-zinc-300"
-            >
-              Ana sayfa
-            </Link>
-            <Link
-              href="/magaza"
-              className="rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
-            >
-              Mağaza
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
+  if (!me || me.adminApproved !== true || me.role !== "ADMIN") {
+    redirect("/profil");
   }
 
-  const products = getAllProducts();
+  async function setApproved(formData: FormData) {
+    "use server";
+
+    const userId = String(formData.get("userId") ?? "");
+    const adminApproved = String(formData.get("adminApproved") ?? "");
+    if (!userId) return;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { adminApproved: adminApproved === "true" },
+    });
+
+    revalidatePath("/admin");
+  }
+
+  async function setRole(formData: FormData) {
+    "use server";
+
+    const userId = String(formData.get("userId") ?? "");
+    const role = String(formData.get("role") ?? "");
+    if (!userId) return;
+    if (role !== "USER" && role !== "ADMIN") return;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    });
+
+    revalidatePath("/admin");
+  }
+
+  async function setApplicationStatus(formData: FormData) {
+    "use server";
+
+    const applicationId = String(formData.get("applicationId") ?? "");
+    const status = String(formData.get("status") ?? "") as AppStatus;
+
+    if (!applicationId) return;
+    if (status !== "PENDING" && status !== "APPROVED" && status !== "REJECTED") return;
+
+    await prisma.expertApplication.update({
+      where: { id: applicationId },
+      data: { status },
+    });
+
+    revalidatePath("/admin");
+  }
+
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 25,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      adminApproved: true,
+      createdAt: true,
+    },
+  });
+
+  const applications = await prisma.expertApplication.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 25,
+    include: {
+      user: { select: { email: true, name: true } },
+    },
+  });
 
   return (
-    <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900">Admin</h1>
-          <p className="mt-1 text-sm text-zinc-600">
-            Toplam ürün: <span className="font-semibold text-zinc-900">{products.length}</span>
-          </p>
-        </div>
+    <main className="mx-auto max-w-6xl p-6">
+      <h1 className="text-2xl font-semibold">Admin Paneli</h1>
+      <p className="mt-2 text-sm text-gray-500">
+        Giriş yapan: <b>{me.email}</b> — Rol: <b>{me.role}</b> — Onay:{" "}
+        <b>{String(me.adminApproved)}</b>
+      </p>
 
-        <Link
-          href="/magaza"
-          className="rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
-        >
-          Mağaza
-        </Link>
+      {/* USERS */}
+      <div className="mt-6 rounded-xl border p-4">
+        <h2 className="text-lg font-medium">Son 25 Kullanıcı</h2>
+
+        <div className="mt-4 overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="py-2 pr-3">Ad</th>
+                <th className="py-2 pr-3">E-posta</th>
+                <th className="py-2 pr-3">Rol</th>
+                <th className="py-2 pr-3">Onay</th>
+                <th className="py-2 pr-3">Kayıt</th>
+                <th className="py-2 pr-3">İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b last:border-0">
+                  <td className="py-2 pr-3">{u.name ?? "-"}</td>
+                  <td className="py-2 pr-3">{u.email ?? "-"}</td>
+                  <td className="py-2 pr-3">{u.role}</td>
+                  <td className="py-2 pr-3">{u.adminApproved ? "✅ Onaylı" : "⏳ Onaysız"}</td>
+                  <td className="py-2 pr-3">{new Date(u.createdAt).toLocaleString("tr-TR")}</td>
+                  <td className="py-2 pr-3">
+                    <div className="flex flex-wrap gap-2">
+                      {u.id !== me.id && (
+                        <form action={setApproved}>
+                          <input type="hidden" name="userId" value={u.id} />
+                          <input
+                            type="hidden"
+                            name="adminApproved"
+                            value={u.adminApproved ? "false" : "true"}
+                          />
+                          <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
+                            {u.adminApproved ? "Onayı Geri Al" : "Onayla"}
+                          </button>
+                        </form>
+                      )}
+
+                      {u.id !== me.id && (
+                        <form action={setRole}>
+                          <input type="hidden" name="userId" value={u.id} />
+                          <input type="hidden" name="role" value={u.role === "ADMIN" ? "USER" : "ADMIN"} />
+                          <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
+                            {u.role === "ADMIN" ? "USER Yap" : "ADMIN Yap"}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-2">
-          {products.map((p: any) => {
-            const name = getProductName(p);
-            const slug = getProductSlug(p);
-            const href = slug ? `/urun/${encodeURIComponent(slug)}` : "/magaza";
+      {/* APPLICATIONS */}
+      <div className="mt-8 rounded-xl border p-4">
+        <h2 className="text-lg font-medium">Son 25 Uzman Başvurusu</h2>
 
-            return (
-              <div
-                key={String(p?.id ?? slug ?? name)}
-                className="flex flex-col gap-1 rounded-2xl border border-zinc-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <div className="text-sm font-semibold text-zinc-900">{name}</div>
-                  <div className="font-mono text-[11px] text-zinc-500">{slug || "(slug yok)"}</div>
-                </div>
+        <div className="mt-4 overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="py-2 pr-3">Kullanıcı</th>
+                <th className="py-2 pr-3">Telefon</th>
+                <th className="py-2 pr-3">Şehir</th>
+                <th className="py-2 pr-3">Durum</th>
+                <th className="py-2 pr-3">Tarih</th>
+                <th className="py-2 pr-3">İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((a) => (
+                <tr key={a.id} className="border-b last:border-0">
+                  <td className="py-2 pr-3">
+                    <div className="font-medium">{a.fullName}</div>
+                    <div className="text-xs text-gray-500">{a.user?.email ?? "-"}</div>
+                  </td>
+                  <td className="py-2 pr-3">{a.phone}</td>
+                  <td className="py-2 pr-3">{a.city}</td>
+                  <td className="py-2 pr-3">
+                    {a.status === "APPROVED" ? "✅ APPROVED" : a.status === "REJECTED" ? "❌ REJECTED" : "⏳ PENDING"}
+                  </td>
+                  <td className="py-2 pr-3">{new Date(a.createdAt).toLocaleString("tr-TR")}</td>
+                  <td className="py-2 pr-3">
+                    <div className="flex flex-wrap gap-2">
+                      <form action={setApplicationStatus}>
+                        <input type="hidden" name="applicationId" value={a.id} />
+                        <input type="hidden" name="status" value="APPROVED" />
+                        <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
+                          Onayla
+                        </button>
+                      </form>
 
-                <Link
-                  href={href}
-                  className="mt-2 inline-flex w-fit rounded-2xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 hover:border-zinc-300 sm:mt-0"
-                >
-                  Ürüne git
-                </Link>
-              </div>
-            );
-          })}
+                      <form action={setApplicationStatus}>
+                        <input type="hidden" name="applicationId" value={a.id} />
+                        <input type="hidden" name="status" value="REJECTED" />
+                        <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
+                          Reddet
+                        </button>
+                      </form>
+
+                      <form action={setApplicationStatus}>
+                        <input type="hidden" name="applicationId" value={a.id} />
+                        <input type="hidden" name="status" value="PENDING" />
+                        <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
+                          Beklemede
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {applications.length === 0 && (
+                <tr>
+                  <td className="py-3 text-sm text-gray-600" colSpan={6}>
+                    Başvuru yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
