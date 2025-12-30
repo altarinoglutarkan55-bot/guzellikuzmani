@@ -1,47 +1,40 @@
-﻿import { auth } from "@/app/_lib/auth";
+﻿import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/_lib/auth";
 import Link from "next/link";
 
-export const revalidate = 0;
-
 export default async function HesabimPage() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return (
-      <main className="mx-auto max-w-screen-md px-4 py-10">
-        <h1 className="text-2xl font-extrabold">Hesabım</h1>
-        <p className="mt-2 text-zinc-600">Bu sayfayı görmek için giriş yapmalısın.</p>
-
+      <div className="mx-auto max-w-4xl p-6">
+        <h1 className="text-xl font-semibold mb-4">
+          Giriş yapmanız gerekiyor
+        </h1>
         <Link
-          className="mt-6 inline-flex rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-extrabold text-white"
           href="/api/auth/signin"
+          className="inline-block rounded-md bg-black px-4 py-2 text-white"
         >
-          Giriş yap
+          Giriş Yap
         </Link>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-screen-md px-4 py-10">
-      <h1 className="text-2xl font-extrabold">Hesabım</h1>
+    <div className="mx-auto max-w-4xl p-6">
+      <h1 className="text-2xl font-bold mb-4">Hesabım</h1>
 
-      <div className="mt-6 rounded-3xl border border-zinc-200 bg-white p-5">
-        <p className="text-sm text-zinc-600">Giriş yapan kullanıcı</p>
-        <p className="mt-1 text-lg font-extrabold text-zinc-900">
-          {session.user.name || "İsimsiz"}
+      <div className="rounded-lg border p-4">
+        <p>
+          <strong>Email:</strong> {session.user.email}
         </p>
-        <p className="mt-1 text-sm text-zinc-700">{session.user.email}</p>
+        {session.user.name && (
+          <p>
+            <strong>Ad:</strong> {session.user.name}
+          </p>
+        )}
       </div>
-
-      <div className="mt-6 flex gap-2">
-        <Link className="rounded-2xl border px-4 py-2 text-sm font-bold" href="/blog">
-          Blog
-        </Link>
-        <Link className="rounded-2xl border px-4 py-2 text-sm font-bold" href="/forum">
-          Forum
-        </Link>
-      </div>
-    </main>
+    </div>
   );
 }

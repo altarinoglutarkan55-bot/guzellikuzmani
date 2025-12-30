@@ -1,101 +1,58 @@
 ﻿import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/_lib/auth";
-import { prisma } from "@/app/_lib/prisma";
+import Link from "next/link";
 
 export default async function ProfilPage() {
   const session = await getServerSession(authOptions);
 
-  // Middleware zaten koruyor ama yine de null gelirse güvenli çıkış:
-  const email = session?.user?.email;
-  if (!email) {
+  if (!session?.user) {
     return (
-    <main className="mx-auto max-w-3xl p-6">
-      {user && user.adminApproved !== true && (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
-          <div className="font-semibold">Hesabın admin onayı bekliyor ⏳</div>
-          <div className="mt-1 text-gray-700">
-            Onay gelene kadar admin/uzman alanları kapalı olacak. Onaylandığında otomatik açılacak.
-          </div>
-        </div>
-      )}
-        <h1 className="text-2xl font-semibold">Profil</h1>
-        <p className="mt-4">Session bulunamadı.</p>
+      <main className="mx-auto max-w-3xl p-6">
+        <h1 className="text-xl font-semibold mb-4">
+          Profilini görüntülemek için giriş yapmalısın
+        </h1>
+        <Link
+          href="/api/auth/signin"
+          className="inline-block rounded-md bg-black px-4 py-2 text-white"
+        >
+          Giriş Yap
+        </Link>
       </main>
     );
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      name: true,
-      email: true,
-      role: true,
-      adminApproved: true,
-      createdAt: true,
-    },
-  });
+  // ✅ USER BURADA TANIMLI (artık hata yok)
+  const user = session.user as {
+    email?: string;
+    name?: string;
+    adminApproved?: boolean;
+  };
 
   return (
     <main className="mx-auto max-w-3xl p-6">
-      {user && user.adminApproved !== true && (
+      {user.adminApproved !== true && (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
-          <div className="font-semibold">Hesabın admin onayı bekliyor ⏳</div>
+          <div className="font-semibold">
+            Hesabın admin onayı bekliyor ⏳
+          </div>
           <div className="mt-1 text-gray-700">
-            Onay gelene kadar admin/uzman alanları kapalı olacak. Onaylandığında otomatik açılacak.
+            Onaylandıktan sonra uzman özellikleri açılacak.
           </div>
         </div>
       )}
-      <h1 className="text-2xl font-semibold">Profil</h1>
-      <p className="mt-2 text-sm text-gray-500">
-        Bu sayfa middleware ile korunuyor. Aşağıdaki bilgiler DB’den okunuyor.
-      </p>
 
-      <div className="mt-6 rounded-xl border p-4">
-        <h2 className="text-lg font-medium">Kullanıcı Bilgileri (DB)</h2>
+      <h1 className="text-2xl font-bold mb-4">Profil</h1>
 
-        {!user ? (
-          <p className="mt-3 text-sm text-red-600">DB’de kullanıcı bulunamadı.</p>
-        ) : (
-          <div className="mt-4 grid gap-3 text-sm">
-            <div className="flex items-center justify-between border-b pb-2">
-              <span className="text-gray-500">Ad</span>
-              <span className="font-medium">{user.name ?? "-"}</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b pb-2">
-              <span className="text-gray-500">E-posta</span>
-              <span className="font-medium">{user.email}</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b pb-2">
-              <span className="text-gray-500">Rol</span>
-              <span className="font-medium">{user.role}</span>
-            </div>
-
-            <div className="flex items-center justify-between border-b pb-2">
-              <span className="text-gray-500">Admin Onayı</span>
-              <span className="font-medium">
-                {user.adminApproved ? "Onaylı ✅" : "Onaysız ⏳"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Kayıt Tarihi</span>
-              <span className="font-medium">
-                {new Date(user.createdAt).toLocaleString("tr-TR")}
-              </span>
-            </div>
-          </div>
+      <div className="rounded-lg border p-4 space-y-2">
+        <p>
+          <strong>Email:</strong> {user.email}
+        </p>
+        {user.name && (
+          <p>
+            <strong>Ad:</strong> {user.name}
+          </p>
         )}
-      </div>
-
-      <div className="mt-6 rounded-xl border p-4">
-        <h2 className="text-lg font-medium">Session (debug)</h2>
-        <pre className="mt-3 overflow-auto rounded-lg bg-black p-4 text-xs text-white">
-          {JSON.stringify(session, null, 2)}
-        </pre>
       </div>
     </main>
   );
 }
-
