@@ -19,7 +19,7 @@ export default function GirisPage() {
       </p>
 
       <div className="mt-5">
-        <GoogleButton label="Google ile devam et" />
+        <GoogleButton onClick={() => signIn("google", { callbackUrl })} />
       </div>
 
       <div className="my-6 flex items-center gap-3">
@@ -66,7 +66,7 @@ export default function GirisPage() {
 
       <p className="mt-4 text-sm text-zinc-600">
         Hesabın yok mu?{" "}
-        <Link className="font-semibold underline" href="/kayit">
+        <Link className="font-semibold underline" href="/kaydol">
           Kaydol
         </Link>
       </p>
