@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/app/providers";
 
 function formatTRY(n: number) {
@@ -28,12 +28,15 @@ export default function CartDrawer() {
     setCoupon,
   } = useCart();
 
+  const [mounted, setMounted] = useState(false);
   const [code, setCode] = useState(coupon ?? "");
 
-  // dışarıdan coupon değişirse input sync
+  useEffect(() => setMounted(true), []);
+
+  // drawer açılınca input güncel kuponla senkron kalsın
   useEffect(() => {
-    setCode(coupon ?? "");
-  }, [coupon]);
+    if (isOpen) setCode(coupon ?? "");
+  }, [isOpen, coupon]);
 
   // body scroll lock + ESC
   useEffect(() => {
@@ -59,14 +62,16 @@ export default function CartDrawer() {
   }, [isOpen, close]);
 
   const progress = useMemo(() => {
-    const threshold = 1000; // TL
+    const threshold = 1000;
     const paid = Math.max(0, subtotal - discount);
     const left = Math.max(0, threshold - paid);
     const pct = Math.min(100, Math.round((paid / threshold) * 100));
     return { threshold, paid, left, pct };
   }, [subtotal, discount]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
+
+  const activeCoupon = (coupon ?? "").trim();
 
   return createPortal(
     <div
@@ -79,96 +84,97 @@ export default function CartDrawer() {
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      <aside className="absolute right-0 top-0 h-full w-full max-w-md border-l bg-white shadow-2xl">
+      {/* ✅ flex-col: footer hiçbir zaman kaybolmaz */}
+      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="text-sm font-extrabold text-zinc-900">Sepetim</div>
-          <button
-            type="button"
-            onClick={close}
-            className="rounded-full border px-3 py-1 text-sm font-semibold hover:bg-zinc-50"
-          >
-            Kapat
-          </button>
+        <div className="shrink-0 border-b px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-extrabold text-zinc-900">Sepetim</div>
+              <div className="text-xs text-zinc-500">{count} ürün</div>
+            </div>
+            <button
+              onClick={close}
+              className="rounded-lg border px-3 py-1 text-xs font-semibold hover:bg-zinc-50"
+            >
+              Kapat
+            </button>
+          </div>
         </div>
 
         {/* Free shipping */}
-        <div className="border-b px-4 py-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-700">Ücretsiz kargo eşiği</span>
+        <div className="shrink-0 border-b px-4 py-3">
+          <div className="flex items-center justify-between text-xs text-zinc-600">
+            <span>Ücretsiz kargo eşiği</span>
             <span className="font-semibold text-zinc-900">{formatTRY(progress.threshold)}</span>
           </div>
 
-          <div className="mt-2 h-2 w-full rounded-full bg-zinc-200">
-            <div className="h-2 rounded-full bg-zinc-900" style={{ width: `${progress.pct}%` }} />
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+            <div className="h-full bg-zinc-900" style={{ width: `${progress.pct}%` }} />
           </div>
 
           {count > 0 ? (
             progress.left === 0 ? (
-              <div className="mt-2 font-semibold text-zinc-900">🎉 Ücretsiz kargo kazandın!</div>
+              <div className="mt-2 text-xs font-semibold text-zinc-900">
+                🎉 Ücretsiz kargo kazandın!
+              </div>
             ) : (
-              <div className="mt-2 text-zinc-700">
-                Ücretsiz kargo için <span className="font-semibold text-zinc-900">{formatTRY(progress.left)}</span>{" "}
+              <div className="mt-2 text-xs text-zinc-600">
+                Ücretsiz kargo için{" "}
+                <span className="font-semibold text-zinc-900">{formatTRY(progress.left)}</span>{" "}
                 daha ekle.
               </div>
             )
           ) : (
-            <div className="mt-2 text-zinc-700">Sepetin boş.</div>
+            <div className="mt-2 text-xs text-zinc-500">Sepetin boş.</div>
           )}
         </div>
 
-        {/* Items */}
-        <div className="max-h-[52vh] overflow-auto px-4 py-3">
+        {/* ✅ Items: artık flex-1, footer’ı aşağı itmez */}
+        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
           {items.length === 0 ? (
-            <div className="rounded-xl border bg-zinc-50 p-4 text-sm text-zinc-700">
-              Sepetin boş.
-              <div className="mt-3">
-                <Link
-                  href="/magaza"
-                  onClick={close}
-                  className="inline-flex rounded-full border bg-white px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
-                >
-                  Mağazaya Git
-                </Link>
-              </div>
+            <div className="rounded-xl border p-4 text-sm text-zinc-600">
+              Sepetin boş.{" "}
+              <Link className="font-semibold underline" href="/magaza" onClick={close}>
+                Mağazaya Git
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">
               {items.map((it) => (
                 <div key={it.id} className="flex gap-3 rounded-xl border p-3">
-                  <div className="h-16 w-16 overflow-hidden rounded-lg bg-zinc-100">
+                  <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-zinc-100">
                     {it.image ? (
-                      <Image src={it.image} alt={it.title} width={64} height={64} className="h-16 w-16 object-cover" />
+                      <Image src={it.image} alt={it.title} fill className="object-cover" />
                     ) : null}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-zinc-900">{it.title}</div>
-                    <div className="mt-1 text-sm text-zinc-700">{formatTRY(it.price)}</div>
+                    <div className="mt-1 text-xs text-zinc-600">{formatTRY(it.price)}</div>
 
                     <div className="mt-2 flex items-center justify-between">
-                      <div className="inline-flex items-center rounded-full border">
+                      <div className="inline-flex items-center gap-2 rounded-lg border px-2 py-1">
                         <button
-                          type="button"
+                          className="px-2 text-sm font-bold"
                           onClick={() => dec(it.id)}
-                          className="px-3 py-1 text-sm font-bold hover:bg-zinc-50"
+                          aria-label="Azalt"
                         >
                           -
                         </button>
-                        <div className="px-3 py-1 text-sm font-semibold">{it.qty}</div>
+                        <span className="min-w-6 text-center text-xs font-semibold">{it.qty}</span>
                         <button
-                          type="button"
+                          className="px-2 text-sm font-bold"
                           onClick={() => inc(it.id)}
-                          className="px-3 py-1 text-sm font-bold hover:bg-zinc-50"
+                          aria-label="Arttır"
                         >
                           +
                         </button>
                       </div>
 
                       <button
-                        type="button"
+                        className="text-xs font-semibold text-zinc-600 underline"
                         onClick={() => remove(it.id)}
-                        className="text-sm font-semibold text-zinc-700 hover:text-zinc-900"
                       >
                         Kaldır
                       </button>
@@ -178,9 +184,8 @@ export default function CartDrawer() {
               ))}
 
               <button
-                type="button"
                 onClick={clear}
-                className="w-full rounded-xl border bg-white px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
+                className="w-full rounded-xl border px-4 py-2 text-xs font-semibold hover:bg-zinc-50"
               >
                 Sepeti Temizle
               </button>
@@ -188,52 +193,66 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 border-t bg-white px-4 py-4">
-          <div className="flex items-center gap-2">
+        {/* Footer totals + coupon */}
+        <div className="shrink-0 border-t px-4 py-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between text-zinc-700">
+              <span>Ara toplam</span>
+              <span className="font-semibold text-zinc-900">{formatTRY(subtotal)}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-zinc-700">
+              <span>İndirim</span>
+              <span className="font-semibold text-zinc-900">- {formatTRY(discount)}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-zinc-700">
+              <span>Kargo</span>
+              <span className="font-semibold text-zinc-900">{formatTRY(shipping)}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-zinc-900">
+              <span className="font-extrabold">Toplam</span>
+              <span className="font-extrabold">{formatTRY(total)}</span>
+            </div>
+          </div>
+
+          {/* ✅ Kupon her zaman görünür */}
+          <div className="mt-4 flex gap-2">
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Kupon (TOLGA10)"
-              className="h-10 flex-1 rounded-xl border px-3 text-sm outline-none focus:ring-2 focus:ring-zinc-900/20"
+              placeholder="Kupon (örn: TOLGA10)"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/20"
             />
             <button
-              type="button"
               onClick={() => setCoupon(code)}
-              className="h-10 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
             >
               Uygula
             </button>
           </div>
 
-          <div className="mt-3 space-y-1 text-sm">
-            <div className="flex justify-between text-zinc-700">
-              <span>Ara toplam</span>
-              <span className="font-semibold text-zinc-900">{formatTRY(subtotal)}</span>
+          {activeCoupon !== "" && (
+            <div className="mt-2 text-xs text-zinc-600">
+              Aktif kupon:{" "}
+              <span className="font-semibold text-zinc-900">{activeCoupon.toUpperCase()}</span>
             </div>
-            <div className="flex justify-between text-zinc-700">
-              <span>İndirim</span>
-              <span className="font-semibold text-zinc-900">- {formatTRY(discount)}</span>
-            </div>
-            <div className="flex justify-between text-zinc-700">
-              <span>Kargo</span>
-              <span className="font-semibold text-zinc-900">{formatTRY(shipping)}</span>
-            </div>
-            <div className="mt-2 flex justify-between text-base">
-              <span className="font-extrabold text-zinc-900">Toplam</span>
-              <span className="font-extrabold text-zinc-900">{formatTRY(total)}</span>
-            </div>
-          </div>
+          )}
 
           <Link
             href="/odeme"
             onClick={close}
-            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white hover:bg-zinc-800"
+            className={`mt-3 block w-full rounded-xl px-4 py-3 text-center text-sm font-extrabold ${
+              count > 0
+                ? "bg-zinc-900 text-white hover:bg-zinc-800"
+                : "pointer-events-none bg-zinc-200 text-zinc-500"
+            }`}
           >
-            Ödemeye Geç (demo)
+            Ödeme (demo)
           </Link>
 
-          <div className="mt-2 text-xs text-zinc-500">
+          <div className="mt-2 text-[11px] text-zinc-500">
             * Demo sepet/ödeme. Entegrasyonlar (kargo, ödeme, sipariş) sonra bağlanacak.
           </div>
         </div>
