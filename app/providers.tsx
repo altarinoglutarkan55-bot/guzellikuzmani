@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { SessionProvider } from "next-auth/react";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { SessionProvider } from "next-auth/react";
 
 export type CartItem = {
   id: string;
@@ -49,6 +49,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [coupon, setCouponState] = useState("");
 
+  // ilk yüklemede oku
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -57,12 +58,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         if (Array.isArray(parsed)) setItems(parsed);
       }
     } catch {}
+
     try {
       const c = localStorage.getItem(LS_COUPON);
       if (c) setCouponState(String(c));
     } catch {}
   }, []);
 
+  // kaydet
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(items));
@@ -79,14 +82,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const count = items.reduce((a, x) => a + safeNumber(x.qty), 0);
     const subtotal = items.reduce((a, x) => a + safeNumber(x.price) * safeNumber(x.qty), 0);
 
-    // Demo kupon: TOLGA10 => %10
+    // demo kupon
     const code = (coupon ?? "").trim().toUpperCase();
     const discount = code === "TOLGA10" ? Math.round(subtotal * 0.1) : 0;
 
-    // Demo kargo: 1000 üzeri ücretsiz, altı 59 (sepette ürün varsa)
-    const shipping = subtotal - discount >= 1000 ? 0 : count > 0 ? 59 : 0;
+    // demo kargo
+    const paid = Math.max(0, subtotal - discount);
+    const shipping = paid >= 1000 ? 0 : count > 0 ? 59 : 0;
 
-    const total = Math.max(0, subtotal - discount + shipping);
+    const total = Math.max(0, paid + shipping);
 
     return {
       isOpen,
@@ -113,6 +117,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           return [...prev, { ...item, id, qty: q }];
         });
       },
+
       inc: (id) => setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x))),
       dec: (id) =>
         setItems((p) => p.map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))),

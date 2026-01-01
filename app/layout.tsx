@@ -17,6 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <TopNav />
           {children}
+
+          {/* ✅ Sepet sadece 1 kere burada render edilecek (portal ile body’ye basıyor) */}
           <CartDrawer />
         </Providers>
       </body>

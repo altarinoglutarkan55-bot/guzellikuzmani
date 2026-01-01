@@ -61,23 +61,30 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        {/* Left */}
+        {/* Left: Brand */}
         <Link href="/" className="shrink-0 text-base font-extrabold text-zinc-900">
           Güzellik Uzmanı
         </Link>
 
-        {/* Middle (desktop) */}
+        {/* Middle: Primary actions */}
         <nav className="hidden items-center gap-2 md:flex">
           <PillButton onClick={open} ariaLabel="Sepet">
-            Sepet{count > 0 ? ` (${count})` : ""}
+            <span className="relative">
+              Sepet
+              {count > 0 && (
+                <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-zinc-900 px-2 py-[1px] text-[11px] font-extrabold text-white">
+                  {count}
+                </span>
+              )}
+            </span>
           </PillButton>
 
-          {/* Burayı /anket yaptım */}
+          {/* ✅ Uzmanına Danış -> /anket */}
           <PillLink href="/anket">Uzmanına Danış</PillLink>
           <PillLink href="/magaza">Mağaza</PillLink>
         </nav>
 
-        {/* Right */}
+        {/* Right: Secondary / Account */}
         <nav className="flex items-center gap-2">
           <PillLink href="/blog" className="hidden sm:inline-flex">
             Blog
@@ -94,7 +101,7 @@ export default function TopNav() {
           ) : (
             <>
               <PillLink href="/api/auth/signin?callbackUrl=/profil">Giriş</PillLink>
-              <PillLink href="/kayit" className="hidden sm:inline-flex">
+              <PillLink href="/kaydol" className="hidden sm:inline-flex">
                 Kaydol
               </PillLink>
             </>
@@ -105,13 +112,18 @@ export default function TopNav() {
       {/* Mobile row */}
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 pb-3 md:hidden">
         <PillButton onClick={open} ariaLabel="Sepet" className="flex-1">
-          Sepet{count > 0 ? ` (${count})` : ""}
+          <span className="relative">
+            Sepet
+            {count > 0 && (
+              <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-zinc-900 px-2 py-[1px] text-[11px] font-extrabold text-white">
+                {count}
+              </span>
+            )}
+          </span>
         </PillButton>
-
         <PillLink href="/anket" className="flex-1">
           Uzmanına Danış
         </PillLink>
-
         <PillLink href="/magaza" className="flex-1">
           Mağaza
         </PillLink>
