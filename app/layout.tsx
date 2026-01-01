@@ -3,6 +3,7 @@ import "./globals.css";
 
 import Providers from "@/app/providers";
 import TopNav from "@/app/_components/TopNav";
+import CartDrawer from "@/app/_components/CartDrawer";
 
 export const metadata: Metadata = {
   title: "Güzellik Uzmanı",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <TopNav />
           {children}
+          <CartDrawer />
         </Providers>
       </body>
     </html>

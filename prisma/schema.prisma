@@ -4,27 +4,28 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  expertApplication ExpertApplication?
-  id                String             @id @default(cuid())
+  id                String   @id @default(cuid())
   name              String?
-  email             String?            @unique
+  email             String?  @unique
   emailVerified     DateTime?
   image             String?
 
-  // EMAIL+Ãƒâ€¦Ã‚ÂÃƒâ€Ã‚Â°FRE iÃƒÆ’Ã‚Â§in:
-  passwordHash String?
+  passwordHash      String?
 
-  // Yetki sistemi:
-  role          Role    @default(USER) // USER | ADMIN
-  adminApproved Boolean @default(false) // admin panel kullanÃƒâ€Ã‚Â±mÃƒâ€Ã‚Â± iÃƒÆ’Ã‚Â§in onay
+  role              Role     @default(USER)
+  adminApproved     Boolean  @default(false)
 
-  accounts  Account[]
-  sessions  Session[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  accounts          Account[]
+  sessions          Session[]
+
+  expertApplication ExpertApplication?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Account {
@@ -75,16 +76,16 @@ enum ApplicationStatus {
 }
 
 model ExpertApplication {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  status ApplicationStatus @default(PENDING)
+  status    ApplicationStatus @default(PENDING)
 
-  fullName String
-  phone    String
-  city     String
-  note     String?
+  fullName  String
+  phone     String
+  city      String
+  note      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

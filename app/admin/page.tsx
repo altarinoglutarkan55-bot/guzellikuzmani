@@ -6,6 +6,16 @@ import { revalidatePath } from "next/cache";
 
 type AppStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+// ✅ users.map içindeki "u any" hatasını bitiren tip
+type UserRow = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: "USER" | "ADMIN";
+  adminApproved: boolean;
+  createdAt: Date;
+};
+
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email;
@@ -69,7 +79,8 @@ export default async function AdminPage() {
     revalidatePath("/admin");
   }
 
-  const users = await prisma.user.findMany({
+  // ✅ users artık tipli
+  const users = (await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 25,
     select: {
@@ -80,7 +91,7 @@ export default async function AdminPage() {
       adminApproved: true,
       createdAt: true,
     },
-  });
+  })) as UserRow[];
 
   const applications = await prisma.expertApplication.findMany({
     orderBy: { createdAt: "desc" },
@@ -94,8 +105,7 @@ export default async function AdminPage() {
     <main className="mx-auto max-w-6xl p-6">
       <h1 className="text-2xl font-semibold">Admin Paneli</h1>
       <p className="mt-2 text-sm text-gray-500">
-        Giriş yapan: <b>{me.email}</b> — Rol: <b>{me.role}</b> — Onay:{" "}
-        <b>{String(me.adminApproved)}</b>
+        Giriş yapan: <b>{me.email}</b> — Rol: <b>{me.role}</b> — Onay: <b>{String(me.adminApproved)}</b>
       </p>
 
       {/* USERS */}
@@ -114,6 +124,7 @@ export default async function AdminPage() {
                 <th className="py-2 pr-3">İşlem</th>
               </tr>
             </thead>
+
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className="border-b last:border-0">
@@ -122,16 +133,13 @@ export default async function AdminPage() {
                   <td className="py-2 pr-3">{u.role}</td>
                   <td className="py-2 pr-3">{u.adminApproved ? "✅ Onaylı" : "⏳ Onaysız"}</td>
                   <td className="py-2 pr-3">{new Date(u.createdAt).toLocaleString("tr-TR")}</td>
+
                   <td className="py-2 pr-3">
                     <div className="flex flex-wrap gap-2">
                       {u.id !== me.id && (
                         <form action={setApproved}>
                           <input type="hidden" name="userId" value={u.id} />
-                          <input
-                            type="hidden"
-                            name="adminApproved"
-                            value={u.adminApproved ? "false" : "true"}
-                          />
+                          <input type="hidden" name="adminApproved" value={u.adminApproved ? "false" : "true"} />
                           <button className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50" type="submit">
                             {u.adminApproved ? "Onayı Geri Al" : "Onayla"}
                           </button>
@@ -172,6 +180,7 @@ export default async function AdminPage() {
                 <th className="py-2 pr-3">İşlem</th>
               </tr>
             </thead>
+
             <tbody>
               {applications.map((a) => (
                 <tr key={a.id} className="border-b last:border-0">
@@ -182,9 +191,14 @@ export default async function AdminPage() {
                   <td className="py-2 pr-3">{a.phone}</td>
                   <td className="py-2 pr-3">{a.city}</td>
                   <td className="py-2 pr-3">
-                    {a.status === "APPROVED" ? "✅ APPROVED" : a.status === "REJECTED" ? "❌ REJECTED" : "⏳ PENDING"}
+                    {a.status === "APPROVED"
+                      ? "✅ APPROVED"
+                      : a.status === "REJECTED"
+                        ? "❌ REJECTED"
+                        : "⏳ PENDING"}
                   </td>
                   <td className="py-2 pr-3">{new Date(a.createdAt).toLocaleString("tr-TR")}</td>
+
                   <td className="py-2 pr-3">
                     <div className="flex flex-wrap gap-2">
                       <form action={setApplicationStatus}>
