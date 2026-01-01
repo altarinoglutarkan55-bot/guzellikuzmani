@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
+import GoogleButton from "@/app/_components/GoogleButton";
 
 export default function GirisPage() {
   const [email, setEmail] = useState("");
@@ -17,12 +18,9 @@ export default function GirisPage() {
         Hesabına giriş yap veya Google ile devam et.
       </p>
 
-      <button
-        onClick={() => signIn("google", { callbackUrl })}
-        className="mt-5 w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold hover:bg-zinc-50"
-      >
-        Google ile devam et
-      </button>
+      <div className="mt-5">
+        <GoogleButton label="Google ile devam et" />
+      </div>
 
       <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-zinc-200" />

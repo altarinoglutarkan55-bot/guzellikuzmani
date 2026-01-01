@@ -1,8 +1,8 @@
-﻿import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { compare } from "bcryptjs";
 import { prisma } from "@/app/_lib/prisma";
 
 export const authOptions: NextAuthOptions = {
@@ -11,32 +11,33 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
 
   providers: [
-    // Google OAuth
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
 
-    // Email + Şifre (Credentials)
     CredentialsProvider({
-      name: "Credentials",
+      name: "Email & Şifre",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: "E-posta", type: "email" },
+        password: { label: "Şifre", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const email = credentials?.email?.toLowerCase().trim();
+        const password = credentials?.password;
+        if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) return null;
 
-        if (!user || !user.passwordHash) return null;
-
-        const ok = await compare(credentials.password, user.passwordHash);
+        const ok = await compare(password, user.passwordHash);
         if (!ok) return null;
 
-        return { id: user.id, email: user.email, name: user.name };
+        return { id: user.id, email: user.email ?? undefined, name: user.name ?? undefined };
       },
     }),
   ],
@@ -48,15 +49,14 @@ export const authOptions: NextAuthOptions = {
       return baseUrl;
     },
 
-    async jwt({ token, user }) {
-      // credentials login sonrası token'a id ekleyelim
-      if (user?.id) token.id = user.id;
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (session.user && token?.id) (session.user as any).id = token.id;
+    async session({ session, user, token }) {
+      const id = (user as any)?.id ?? (token as any)?.sub;
+      if (session.user && id) (session.user as any).id = id;
       return session;
     },
+  },
+
+  pages: {
+    signIn: "/giris",
   },
 };
